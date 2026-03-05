@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='song',
             name='language',
-            field=models.CharField(choices=[('en', 'English'), ('es', 'Spanish'), ('fr', 'French'), ('de', 'German'), ('hi', 'Hindi'), ('ja', 'Japanese'), ('ta', 'Tamil'), ('te', 'Telugu'), ('ml', 'Malayalam'), ('kn', 'Kannada')], max_length=5),
+            field=models.CharField(choices=[('en', 'English'), ('hi', 'Hindi'),  ('ta', 'Tamil'), ('te', 'Telugu'), ('ml', 'Malayalam'), ('kn', 'Kannada')], max_length=5),
         ),
         migrations.AlterField(
             model_name='userprofile',
             name='preferred_language',
-            field=models.CharField(choices=[('en', 'English'), ('es', 'Spanish'), ('fr', 'French'), ('de', 'German'), ('hi', 'Hindi'), ('ja', 'Japanese'), ('ta', 'Tamil'), ('te', 'Telugu'), ('ml', 'Malayalam'), ('kn', 'Kannada')], default='en', max_length=5),
+            field=models.CharField(choices=[('en', 'English'), ('hi', 'Hindi'),('ta', 'Tamil'), ('te', 'Telugu'), ('ml', 'Malayalam'), ('kn', 'Kannada')], default='en', max_length=5),
         ),
     ]

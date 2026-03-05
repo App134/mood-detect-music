@@ -1,14 +1,19 @@
 /* Custom styles for MoodMusic */
 
 :root {
-    --primary: #6366f1;
+    --primary: #8b5cf6;
+    --primary-glow: rgba(139, 92, 246, 0.4);
     --secondary: #ec4899;
+    --accent: #00d2ff;
     --success: #10b981;
     --danger: #ef4444;
     --warning: #f59e0b;
     --info: #3b82f6;
-    --dark: #1f2937;
-    --light: #f3f4f6;
+    --dark: #0f172a;
+    --light: #f8fafc;
+    --glass: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-text: rgba(255, 255, 255, 0.9);
 }
 
 * {
@@ -17,16 +22,56 @@
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     height: 100%;
+    overflow-x: hidden;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Outfit', 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top right, #3b0764, #0f172a);
+    color: var(--glass-text);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    position: relative;
+}
+
+/* Premium Noise Texture Overlay */
+body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.04;
+    z-index: 9999;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Fluid Typography */
+.display-2 {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+}
+
+.display-4 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 40%);
+    z-index: -1;
 }
 
 main {
@@ -36,69 +81,120 @@ main {
 
 /* Navbar Styles */
 .navbar {
-    background: rgba(99, 102, 241, 0.95);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    padding: 15px 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 .navbar-brand {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #fff !important;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    font-size: 1.75rem;
+    font-weight: 800;
+    background: linear-gradient(to right, var(--primary), var(--accent));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
 }
 
 .nav-link {
-    color: rgba(255, 255, 255, 0.85) !important;
-    margin: 0 5px;
-    transition: all 0.3s ease;
-    font-weight: 500;
+    color: var(--glass-text) !important;
+    font-weight: 600;
+    margin: 0 10px;
+    opacity: 0.7;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nav-link:hover {
-    color: #fff !important;
+    opacity: 1;
     transform: translateY(-2px);
+    color: var(--primary) !important;
 }
 
-/* Card Styles */
+/* Glass Card Styles */
 .card {
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 24px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    color: var(--glass-text);
+    position: relative;
     overflow: hidden;
 }
 
+/* Inner glow for premium feel */
+.card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 50%, rgba(255, 255, 255, 0.05));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
 .card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    transform: translateY(-10px) scale(1.02);
+    border-color: rgba(139, 92, 246, 0.5) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px var(--primary-glow);
+}
+
+/* Spotlight Effect Layer */
+.spotlight {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    top: var(--y, 0);
+    left: var(--x, 0);
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle closest-side, rgba(139, 92, 246, 0.15), transparent);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.card:hover .spotlight {
+    opacity: 1;
 }
 
 .card-body {
     padding: 25px;
+    position: relative;
+    z-index: 1;
 }
 
 /* Button Styles */
 .btn {
-    border-radius: 10px;
-    font-weight: 600;
-    padding: 10px 20px;
-    transition: all 0.3s ease;
+    border-radius: 14px;
+    font-weight: 700;
+    padding: 12px 28px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     border: none;
+    letter-spacing: 0.5px;
 }
 
 .btn-primary {
-    background-color: var(--primary);
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    box-shadow: 0 4px 15px var(--primary-glow);
     color: #fff;
 }
 
 .btn-primary:hover {
-    background-color: #4f46e5;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px var(--primary-glow);
+    background: linear-gradient(135deg, var(--secondary), var(--primary));
 }
 
 .btn-primary:active {
@@ -197,11 +293,13 @@ main {
 /* Footer Styles */
 footer {
     background-color: rgba(0, 0, 0, 0.2);
-    color: #fff;
-    padding: 20px;
+    color: var(--glass-text);
+    padding: 30px 20px;
     text-align: center;
     margin-top: auto;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--glass-border);
+    font-size: 0.9rem;
+    opacity: 0.8;
 }
 
 /* Utility Classes */
@@ -224,11 +322,24 @@ footer {
 }
 
 /* Animations */
+.animate-slide-left {
+    animation: slideInLeft 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-right {
+    animation: slideInRight 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-fade-in {
+    animation: fadeIn 1s ease-out;
+}
+
 @keyframes slideInLeft {
     from {
         opacity: 0;
         transform: translateX(-30px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -240,6 +351,7 @@ footer {
         opacity: 0;
         transform: translateX(30px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -250,31 +362,115 @@ footer {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+    .display-2 {
+        font-size: 3.5rem;
+    }
+
+    .display-4 {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .navbar {
+        padding: 15px 0;
+    }
+
+    .hero-content {
+        margin-bottom: 40px;
+    }
+
+    .display-2 {
+        font-size: 3rem;
+    }
+
+    .display-4 {
+        font-size: 2.2rem;
+    }
+}
+
 @media (max-width: 768px) {
+    main {
+        padding: 15px;
+    }
+
     .container-fluid {
         padding: 10px;
     }
-    
+
     .navbar-brand {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
     }
-    
-    .display-3 {
-        font-size: 2rem;
+
+    .display-2 {
+        font-size: 2.5rem;
     }
-    
+
+    .display-4 {
+        font-size: 1.8rem;
+    }
+
+    .lead.fs-4 {
+        font-size: 1.1rem !important;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .btn-lg {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+
+    .features-grid {
+        gap: 15px !important;
+    }
+
+    .feature-item span {
+        font-size: 0.9rem;
+    }
+
+    footer {
+        padding: 20px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .display-2 {
+        font-size: 2.1rem;
+    }
+
+    .display-4 {
+        font-size: 1.6rem;
+    }
+
+    .card {
+        border-radius: 16px;
+    }
+
     .card-body {
         padding: 15px;
     }
-    
-    .stat-card {
-        margin-bottom: 15px;
+
+    .icon-box {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .song-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
     }
 }
 

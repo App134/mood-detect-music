@@ -3,86 +3,129 @@
 {% block title %}Home - MoodMusic{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row" style="min-height: calc(100vh - 200px); align-items: center;">
-        <div class="col-lg-8 mx-auto">
-            <div class="text-center mb-5">
-                <h1 class="display-4 fw-bold text-white mb-4">
-                    <i class="fas fa-heart"></i> Welcome back, {{ user.first_name|default:user.username }}!
-                </h1>
-                <p class="lead text-white-50 mb-5">
-                    Let's find the perfect music for your mood
-                </p>
-            </div>
-            
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="card h-100" style="border-radius: 15px; cursor: pointer; transition: all 0.3s;" 
-                         onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                        <div class="card-body text-center p-5">
-                            <i class="fas fa-camera" style="font-size: 3rem; color: #6366f1;"></i>
-                            <h5 class="card-title mt-3 fw-bold">Detect Your Mood</h5>
-                            <p class="card-text text-muted">
-                                Use your webcam to detect your current emotion and get personalized music recommendations.
-                            </p>
-                            <a href="{% url 'emotion_detection' %}" class="btn btn-primary mt-3">
-                                Start <i class="fas fa-arrow-right"></i>
-                            </a>
+<div class="container py-5">
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 fw-bold text-white mb-3" style="animation: fadeIn 1s ease-out;">
+                Welcome back, <span class="text-primary">{{ user.first_name|default:user.username }}</span>
+            </h1>
+            <p class="lead text-white-50">What's the soundtrack to your soul today?</p>
+        </div>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <!-- Feature Cards -->
+        <div class="col-md-6 col-lg-5">
+            <a href="{% url 'emotion_detection' %}" class="text-decoration-none">
+                <div class="card h-100 border-0 p-4 landing-card">
+                    <div class="card-body text-center d-flex flex-column align-items-center">
+                        <div class="icon-box mb-4">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <h3 class="fw-bold mb-3">Detect Mood</h3>
+                        <p class="text-white-50">Sync your emotions with our AI to discover music that understands you.
+                        </p>
+                        <div class="mt-auto pt-3">
+                            <span class="btn btn-primary">Start Session <i class="fas fa-chevron-right ms-2"></i></span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="col-md-6">
-                    <div class="card h-100" style="border-radius: 15px; cursor: pointer; transition: all 0.3s;" 
-                         onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                        <div class="card-body text-center p-5">
-                            <i class="fas fa-history" style="font-size: 3rem; color: #ec4899;"></i>
-                            <h5 class="card-title mt-3 fw-bold">Your History</h5>
-                            <p class="card-text text-muted">
-                                View your past moods and the songs that matched each emotion.
-                            </p>
-                            <a href="{% url 'playlist_history' %}" class="btn btn-primary mt-3">
-                                Explore <i class="fas fa-arrow-right"></i>
-                            </a>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-5">
+            <a href="{% url 'playlist_history' %}" class="text-decoration-none">
+                <div class="card h-100 border-0 p-4 landing-card">
+                    <div class="card-body text-center d-flex flex-column align-items-center">
+                        <div class="icon-box mb-4 icon-pink">
+                            <i class="fas fa-clock-rotate-left"></i>
+                        </div>
+                        <h3 class="fw-bold mb-3">Your Journey</h3>
+                        <p class="text-white-50">Revisit the moods and melodies that defined your past moments.</p>
+                        <div class="mt-auto pt-3">
+                            <span class="btn btn-outline-light border-2">View History <i
+                                    class="fas fa-chevron-right ms-2"></i></span>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="row g-4 mt-2">
-                <div class="col-md-6">
-                    <div class="card h-100" style="border-radius: 15px; cursor: pointer; transition: all 0.3s;" 
-                         onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                        <div class="card-body text-center p-5">
-                            <i class="fas fa-chart-bar" style="font-size: 3rem; color: #10b981;"></i>
-                            <h5 class="card-title mt-3 fw-bold">Your Dashboard</h5>
-                            <p class="card-text text-muted">
-                                See statistics and insights about your listening habits.
-                            </p>
-                            <a href="{% url 'dashboard' %}" class="btn btn-primary mt-3">
-                                View <i class="fas fa-arrow-right"></i>
-                            </a>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-5">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                <div class="card h-100 border-0 p-4 landing-card">
+                    <div class="card-body text-center d-flex flex-column align-items-center">
+                        <div class="icon-box mb-4 icon-blue">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <h3 class="fw-bold mb-3">Analytics</h3>
+                        <p class="text-white-50">Dive deep into your emotional music patterns and listening habits.</p>
+                        <div class="mt-auto pt-3">
+                            <span class="btn btn-outline-light border-2">Explore Data <i
+                                    class="fas fa-chevron-right ms-2"></i></span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="col-md-6">
-                    <div class="card h-100" style="border-radius: 15px; cursor: pointer; transition: all 0.3s;" 
-                         onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                        <div class="card-body text-center p-5">
-                            <i class="fas fa-cog" style="font-size: 3rem; color: #f59e0b;"></i>
-                            <h5 class="card-title mt-3 fw-bold">Settings</h5>
-                            <p class="card-text text-muted">
-                                Manage your language preferences and account settings.
-                            </p>
-                            <a href="{% url 'language_selection' %}" class="btn btn-primary mt-3">
-                                Manage <i class="fas fa-arrow-right"></i>
-                            </a>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-5">
+            <a href="{% url 'language_selection' %}" class="text-decoration-none">
+                <div class="card h-100 border-0 p-4 landing-card">
+                    <div class="card-body text-center d-flex flex-column align-items-center">
+                        <div class="icon-box mb-4 icon-gold">
+                            <i class="fas fa-language"></i>
+                        </div>
+                        <h3 class="fw-bold mb-3">Preferences</h3>
+                        <p class="text-white-50">Switch languages and fine-tune your global music discovery settings.
+                        </p>
+                        <div class="mt-auto pt-3">
+                            <span class="btn btn-outline-light border-2">Settings <i
+                                    class="fas fa-chevron-right ms-2"></i></span>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 </div>
+
+<style>
+    .icon-box {
+        width: 80px;
+        height: 80px;
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: var(--primary);
+        transition: all 0.3s ease;
+    }
+
+    .icon-pink {
+        color: var(--secondary);
+        background: rgba(236, 72, 153, 0.1);
+        border-color: rgba(236, 72, 153, 0.2);
+    }
+
+    .icon-blue {
+        color: var(--info);
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    .icon-gold {
+        color: var(--warning);
+        background: rgba(245, 158, 11, 0.1);
+        border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    .landing-card:hover .icon-box {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    }
+</style>
 {% endblock %}

@@ -3,66 +3,147 @@
 {% block title %}Landing - MoodMusic{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row align-items-center" style="min-height: calc(100vh - 200px);">
-        <div class="col-lg-6 mb-5 mb-lg-0">
-            <div style="animation: slideInLeft 0.8s ease-out;">
-                <h1 class="display-3 fw-bold text-white mb-4">
-                    <i class="fas fa-music"></i> Your Mood, Your Music
+<div class="container py-5">
+    <div class="row align-items-center justify-content-center hero-row">
+        <div class="col-lg-7 text-center text-lg-start mb-5 mb-lg-0">
+            <div class="hero-content animate-slide-left">
+                <span class="badge rounded-pill bg-primary mb-3 px-3 py-2">AI-POWERED EXPERIENCE</span>
+                <h1 class="display-2 fw-bold text-white mb-4">
+                    Feel the <span class="text-primary">Rhythm</span> of Your <span class="text-secondary">Soul</span>
                 </h1>
-                <p class="lead text-white-50 mb-4">
-                    Experience the perfect playlist for your emotions. Our AI-powered system detects your mood and suggests songs that match your current state of mind.
+                <p class="lead text-white-50 mb-5 fs-4">
+                    Unlock a personalized sonic universe. Our advanced vision AI decodes your emotions in real-time to
+                    curate the perfect playlist for every moment.
                 </p>
-                <ul class="list-unstyled text-white-50 mb-4">
-                    <li class="mb-3"><i class="fas fa-check-circle text-success"></i> Emotion Detection</li>
-                    <li class="mb-3"><i class="fas fa-check-circle text-success"></i> Personalized Recommendations</li>
-                    <li class="mb-3"><i class="fas fa-check-circle text-success"></i> Multi-Language Support</li>
-                    <li class="mb-3"><i class="fas fa-check-circle text-success"></i> Mood History Tracking</li>
-                </ul>
+                <div class="features-grid d-flex flex-wrap gap-4 mb-5 justify-content-center justify-content-lg-start">
+                    <div class="feature-item d-flex align-items-center gap-2">
+                        <div class="glass-icon"><i class="fas fa-bolt text-warning"></i></div>
+                        <span>Instant Detection</span>
+                    </div>
+                    <div class="feature-item d-flex align-items-center gap-2">
+                        <div class="glass-icon"><i class="fas fa-wand-magic-sparkles text-info"></i></div>
+                        <span>Smart Curation</span>
+                    </div>
+                    <div class="feature-item d-flex align-items-center gap-2">
+                        <div class="glass-icon"><i class="fas fa-infinity text-accent"></i></div>
+                        <span>Infinite Library</span>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-lg-6">
-            <div class="card bg-white shadow-lg" style="animation: slideInRight 0.8s ease-out; border-radius: 20px;">
-                <div class="card-body p-5">
-                    <h3 class="card-title text-center mb-4">Get Started</h3>
-                    <div class="d-grid gap-3">
-                        <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-sign-in-alt"></i> Login
+        <div class="col-lg-5 col-xl-4">
+            <div class="card p-2 animate-slide-right">
+                <div class="card-body p-4 p-xl-5">
+                    <div class="text-center mb-5">
+                        <h2 class="fw-bold h3 mb-2">Welcome Back</h2>
+                        <p class="text-white-50 small">Enter your details to explore your music</p>
+                    </div>
+                    <div class="d-grid gap-4">
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-lg shadow-primary">
+                            <i class="fas fa-rocket me-2"></i> Launch Experience
                         </a>
-                        <a href="{% url 'signup' %}" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-user-plus"></i> Create Account
+                        <a href="{% url 'signup' %}" class="btn btn-outline-light btn-lg border-2"
+                            style="border-radius: 14px;">
+                            <i class="fas fa-plus me-2"></i> Create Account
                         </a>
                     </div>
-                    <hr class="my-4">
-                    <p class="text-center text-muted mb-0">
-                        Already have an account? <a href="{% url 'login' %}" class="text-decoration-none">Login here</a>
-                    </p>
+                    <div class="mt-5 text-center">
+                        <p class="text-white-50 small mb-0">
+                            New to MinuMusic? <a href="{% url 'signup' %}"
+                                class="text-primary fw-bold text-decoration-none">Get Started</a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    <div class="floating-particles" id="particles"></div>
 </div>
 
+<script>
+    // Premium unique particles
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = Math.random() * 5 + 2 + 'px';
+        p.style.width = size;
+        p.style.height = size;
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top = Math.random() * 100 + '%';
+        p.style.opacity = Math.random() * 0.5 + 0.1;
+        p.style.animation = `float ${Math.random() * 10 + 10}s infinite linear`;
+        p.style.animationDelay = `-${Math.random() * 10}s`;
+        container.appendChild(p);
+    }
+</script>
+
 <style>
+    .glass-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        font-size: 1.2rem;
+    }
+
+    .shadow-primary {
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+    }
+
     @keyframes slideInLeft {
         from {
             opacity: 0;
-            transform: translateX(-50px);
+            transform: translateX(-100px);
         }
+
         to {
             opacity: 1;
             transform: translateX(0);
         }
     }
-    
+
     @keyframes slideInRight {
         from {
             opacity: 0;
-            transform: translateX(50px);
+            transform: translateX(100px);
         }
+
         to {
             opacity: 1;
             transform: translateX(0);
+        }
+    }
+
+    .floating-particles {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    .particle {
+        position: absolute;
+        background: var(--accent);
+        border-radius: 50%;
+        filter: blur(1px);
+    }
+
+    @keyframes float {
+        0% {
+            transform: translateY(0) translateX(0);
+        }
+
+        50% {
+            transform: translateY(-100px) translateX(50px);
+        }
+
+        100% {
+            transform: translateY(0) translateX(0);
         }
     }
 </style>

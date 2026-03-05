@@ -4,149 +4,255 @@
 
 {% block extra_css %}
 <style>
-    #webcam {
-        border-radius: 15px;
-        max-width: 100%;
-        height: auto;
-        background: #000;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    }
-    
-    .emotion-badge {
-        font-size: 2rem;
-        font-weight: bold;
-        padding: 15px 30px;
-        border-radius: 10px;
-        display: inline-block;
-    }
-    
-    .song-card {
-        transition: all 0.3s ease;
-        border-radius: 12px;
+    .webcam-container {
+        position: relative;
+        border-radius: 20px;
         overflow: hidden;
-        cursor: pointer;
-    }
-    
-    .song-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
-    }
-    
-    .song-thumbnail {
-        width: 100%;
-        height: 180px;
-        object-fit: cover;
-        border-radius: 10px 10px 0 0;
-    }
-    
-    .loading-spinner {
-        display: none;
-        text-align: center;
-        padding: 20px;
-    }
-    
-    /* hide the visual video, keep it playable for audio-only playback */
-    .youtube-player {
-        width: 1px;
-        height: 1px;
-        position: absolute;
-        left: -9999px;
-        border: 0;
+        border: 2px solid var(--glass-border);
+        background: #000;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
 
-    /* Now playing UI */
-    #nowPlayingTitle {
-        font-weight: 600;
-        margin-bottom: 8px;
+    #webcam {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .scan-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(to right, transparent, var(--primary), transparent);
+        box-shadow: 0 0 15px var(--primary);
+        animation: scan 3s linear infinite;
+        display: none;
+        z-index: 10;
+    }
+
+    @keyframes scan {
+        0% {
+            top: 0;
+        }
+
+        100% {
+            top: 100%;
+        }
+    }
+
+    .emotion-display {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 20px;
+        padding: 30px;
+        margin-top: -40px;
+        position: relative;
+        z-index: 20;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .song-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+        padding: 20px 0;
+    }
+
+    .song-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .song-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary);
+    }
+
+    .song-thumb-wrapper {
+        position: relative;
+        padding-top: 100%;
+        /* Square aspect ratio */
+        overflow: hidden;
+    }
+
+    .song-thumbnail {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* HUD Styling */
+    .hud-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+    }
+
+    .hud-corner {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        border: 2px solid var(--accent);
+        opacity: 0.5;
+    }
+
+    .hud-corner.tl {
+        top: 20px;
+        left: 20px;
+        border-right: 0;
+        border-bottom: 0;
+    }
+
+    .hud-corner.tr {
+        top: 20px;
+        right: 20px;
+        border-left: 0;
+        border-bottom: 0;
+    }
+
+    .hud-corner.bl {
+        bottom: 20px;
+        left: 20px;
+        border-right: 0;
+        border-top: 0;
+    }
+
+    .hud-corner.br {
+        bottom: 20px;
+        right: 20px;
+        border-left: 0;
+        border-top: 0;
+    }
+
+    .hud-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(0, 210, 255, 0.3);
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+    }
+
+    .hud-center::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 4px;
+        background: var(--accent);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* Spotlight for cards */
+    .song-card {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .song-card .spotlight {
+        width: 300px;
+        height: 300px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="text-white mb-4 text-center">
-        <i class="fas fa-face-smile"></i> Emotion Detection
-    </h1>
-    
-    <div class="row mb-4">
-        <div class="col-lg-8 mx-auto">
-            <div class="card shadow-lg" style="border-radius: 15px; border: none;">
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 fw-bold text-white mb-3">Emotion <span class="text-primary">Sync</span></h1>
+            <p class="lead text-white-50">Let our AI bridge the gap between your feelings and your music.</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Webcam Column -->
+        <div class="col-lg-7">
+            <div class="card h-100 overflow-hidden">
                 <div class="card-body p-4">
-                    <h5 class="card-title mb-3">
-                        <i class="fas fa-camera"></i> Capture Your Emotion
-                    </h5>
-                    <p class="text-muted mb-3">
-                        Position your face in front of the camera and click "Capture Emotion" to detect your mood.
-                    </p>
-                    
-                    <div class="text-center mb-3">
-                        <video id="webcam" width="400" height="300" autoplay playsinline></video>
-                    </div>
-                    
-                    <div class="d-grid gap-2 d-sm-flex justify-content-center">
-                        <button onclick="startCamera()" class="btn btn-success btn-lg">
-                            <i class="fas fa-play"></i> Start Camera
-                        </button>
-                        <button onclick="captureEmotion()" class="btn btn-primary btn-lg">
-                            <i class="fas fa-camera"></i> Capture Emotion
-                        </button>
-                        <button onclick="stopCamera()" class="btn btn-danger btn-lg">
-                            <i class="fas fa-stop"></i> Stop Camera
-                        </button>
-                    </div>
-                    
-                    <div class="loading-spinner" id="loadingSpinner">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                    <div class="webcam-container mb-4">
+                        <div class="scan-line" id="scanLine"></div>
+                        <div class="hud-overlay">
+                            <div class="hud-corner tl"></div>
+                            <div class="hud-corner tr"></div>
+                            <div class="hud-corner bl"></div>
+                            <div class="hud-corner br"></div>
+                            <div class="hud-center"></div>
                         </div>
-                        <p class="mt-2">Analyzing your emotion...</p>
+                        <video id="webcam" autoplay playsinline></video>
                     </div>
+
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <button onclick="startCamera()" class="btn btn-primary d-flex align-items-center gap-2">
+                            <i class="fas fa-power-off"></i> Initialize
+                        </button>
+                        <button onclick="captureEmotion()" class="btn btn-primary d-flex align-items-center gap-2"
+                            style="background: linear-gradient(135deg, var(--accent), var(--info));">
+                            <i class="fas fa-camera"></i> Capture
+                        </button>
+                        <button onclick="stopCamera()"
+                            class="btn btn-outline-light d-flex align-items-center gap-2 border-2">
+                            <i class="fas fa-stop"></i> Terminate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Column -->
+        <div class="col-lg-5">
+            <div id="emotionResult" style="display: none;" class="h-100">
+                <div
+                    class="emotion-display h-100 d-flex flex-column align-items-center justify-content-center text-center text-white position-relative overflow-hidden">
+                    <div class="spotlight"></div>
+                    <p class="text-uppercase tracking-widest mb-2 opacity-75">Current Vibration</p>
+                    <h2 class="display-1 fw-bold mb-3" id="detectedEmotion"></h2>
+                    <div
+                        class="px-3 py-1 bg-white bg-opacity-10 rounded-pill mb-4 border border-white border-opacity-10">
+                        <span id="confidence"></span>% Confidence
+                    </div>
+                    <i class="fas fa-chevron-down animate-bounce opacity-50"></i>
+                </div>
+            </div>
+
+            <div id="loadingPlaceholder"
+                class="card h-100 d-flex align-items-center justify-content-center text-center p-5">
+                <div class="opacity-50">
+                    <i class="fas fa-face-viewfinder display-1 mb-4"></i>
+                    <h3>Awaiting Input</h3>
+                    <p>Start your camera and capture an emotion to see the magic happen.</p>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div id="emotionResult" style="display: none;">
+
+    <!-- Recommendations Section -->
+    <div id="recommendationsSection" style="display: none;">
         <div class="row mb-4">
-            <div class="col-lg-8 mx-auto">
-                <div class="card shadow-lg" style="border-radius: 15px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                    <div class="card-body p-4 text-center text-white">
-                        <h5 class="mb-3">Detected Emotion</h5>
-                        <div class="emotion-badge" style="background: rgba(255, 255, 255, 0.2); color: white;">
-                            <span id="detectedEmotion"></span>
-                        </div>
-                        <p class="mt-3 mb-0">
-                            <small>Confidence: <span id="confidence"></span>%</small>
-                        </p>
-                    </div>
-                </div>
+            <div class="col-12 d-flex align-items-center justify-content-between">
+                <h3 class="fw-bold mb-0">Curated for You</h3>
+                <span class="badge bg-primary px-3">Sync Active</span>
             </div>
         </div>
-        
-        <div class="row mb-4">
-            <div class="col-lg-10 mx-auto">
-                <div class="card shadow-lg" style="border-radius: 15px; border: none;">
-                    <div class="card-body p-4">
-                        <h5 class="card-title mb-3">
-                            <i class="fas fa-music"></i> Recommended Songs
-                        </h5>
-                        
-                        <div class="loading-spinner" id="songsLoadingSpinner">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-2">Loading songs...</p>
-                        </div>
-                        
-                        <div id="songsContainer" class="d-flex" style="display: none; gap: 12px; overflow-x: auto; padding: 10px;">
-                            <!-- Songs will be loaded here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
+
+        <div id="songsContainer" class="song-grid">
+            <!-- Songs dynamically injected here -->
         </div>
     </div>
-    
+
     <div id="playerContainer" style="display: none;" class="row mb-4">
         <div class="col-lg-10 mx-auto">
             <div class="card shadow-lg" style="border-radius: 15px; border: none;">
@@ -154,17 +260,19 @@
                     <h5 class="card-title mb-3">
                         <i class="fas fa-play-circle"></i> Now Playing
                     </h5>
-                                    <iframe id="youtubePlayer" class="youtube-player" src="" frameborder="0" 
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                            allowfullscreen></iframe>
-                                    <div id="playerControls" style="display: none; margin-top: 10px;">
-                                        <div id="nowPlayingTitle"></div>
-                                        <div>
-                                            <button id="playBtn" class="btn btn-sm btn-primary"><i class="fas fa-play"></i> Play</button>
-                                            <button id="pauseBtn" class="btn btn-sm btn-secondary"><i class="fas fa-pause"></i> Pause</button>
-                                            <button id="stopBtn" class="btn btn-sm btn-danger"><i class="fas fa-stop"></i> Stop</button>
-                                        </div>
-                                    </div>
+                    <iframe id="youtubePlayer" class="youtube-player" src="" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen></iframe>
+                    <div id="playerControls" style="display: none; margin-top: 10px;">
+                        <div id="nowPlayingTitle"></div>
+                        <div>
+                            <button id="playBtn" class="btn btn-sm btn-primary"><i class="fas fa-play"></i>
+                                Play</button>
+                            <button id="pauseBtn" class="btn btn-sm btn-secondary"><i class="fas fa-pause"></i>
+                                Pause</button>
+                            <button id="stopBtn" class="btn btn-sm btn-danger"><i class="fas fa-stop"></i> Stop</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -172,189 +280,201 @@
 </div>
 
 <script>
-let currentMood = null;
-let currentLanguage = '{{ user_profile.preferred_language }}';
-let mediaStream = null;
-let ytPlayer = null;
-let currentPlayingId = null;
+    let currentMood = null;
+    let currentLanguage = '{{ user_profile.preferred_language }}';
+    let mediaStream = null;
+    let ytPlayer = null;
+    let currentPlayingId = null;
 
-// Load YouTube IFrame API
-var tag = document.createElement('script');
-tag.src = "https://www.youtube.com/iframe_api";
-var firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    // Load YouTube IFrame API
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-function onYouTubeIframeAPIReady() {
-    // player will be created on first play
-}
-
-async function startCamera() {
-    try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'user', width: { ideal: 400 }, height: { ideal: 300 } }
-        });
-        const video = document.getElementById('webcam');
-        video.srcObject = mediaStream;
-        video.style.display = 'block';
-    } catch (error) {
-        alert('Error accessing camera: ' + error.message);
-        console.error('Camera error:', error);
+    function onYouTubeIframeAPIReady() {
+        // player will be created on first play
     }
-}
 
-function stopCamera() {
-    if (mediaStream) {
-        mediaStream.getTracks().forEach(track => track.stop());
-        document.getElementById('webcam').style.display = 'none';
-    }
-}
-
-async function captureEmotion() {
-    const video = document.getElementById('webcam');
-    
-    if (!video.srcObject) {
-        alert('Please start the camera first');
-        return;
-    }
-    
-    // Create canvas from video
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    
-    // Convert to base64
-    const imageData = canvas.toDataURL('image/jpeg');
-    
-    document.getElementById('loadingSpinner').style.display = 'block';
-    
-    try {
-        const response = await fetch('{% url "detect_emotion" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ image: imageData })
-        });
-        
-        const data = await response.json();
-        
-        // Use mood even when emotion is null (no face)
-        const mood = data.mood || 'null';
-        currentMood = mood;
-        if (data.emotion) {
-            document.getElementById('detectedEmotion').textContent = data.emotion.toUpperCase();
-            document.getElementById('confidence').textContent = Math.round(data.confidence * 100);
-        } else {
-            document.getElementById('detectedEmotion').textContent = 'NO FACE';
-            document.getElementById('confidence').textContent = '0';
+    async function startCamera() {
+        try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+            });
+            const video = document.getElementById('webcam');
+            video.srcObject = mediaStream;
+            document.getElementById('scanLine').style.display = 'block';
+        } catch (error) {
+            alert('Error accessing camera: ' + error.message);
         }
-        document.getElementById('emotionResult').style.display = 'block';
-        // Load song recommendations using mood (maps 'null' to neutral on server)
-        loadSongRecommendations(mood);
-    } catch (error) {
-        alert('Error: ' + error.message);
-        console.error('Emotion detection error:', error);
-    } finally {
-        document.getElementById('loadingSpinner').style.display = 'none';
     }
-}
 
-async function loadSongRecommendations(mood) {
-    document.getElementById('songsLoadingSpinner').style.display = 'block';
-    
-    try {
-        const response = await fetch('{% url "get_songs" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ mood: mood, language: currentLanguage })
-        });
-        
-        const data = await response.json();
-        
-        const songsContainer = document.getElementById('songsContainer');
-        songsContainer.innerHTML = '';
-        
-        if (data.songs && data.songs.length > 0) {
-            data.songs.forEach(song => {
-                const songCard = document.createElement('div');
-                songCard.className = 'col-md-4 col-lg-3';
-                songCard.innerHTML = `
-                    <div class="card song-card">
+    function stopCamera() {
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+            document.getElementById('webcam').srcObject = null; // Clear the video stream
+            document.getElementById('scanLine').style.display = 'none';
+        }
+    }
+
+    async function captureEmotion() {
+        const video = document.getElementById('webcam');
+
+        if (!video.srcObject) {
+            alert('Please start the camera first');
+            return;
+        }
+
+        // Visual feedback: speed up scanning line?
+        const scanLine = document.getElementById('scanLine');
+        scanLine.style.animationDuration = '1s';
+
+        // Create canvas from video
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+
+        // Convert to base64
+        const imageData = canvas.toDataURL('image/jpeg');
+
+        try {
+            const response = await fetch('{% url "detect_emotion" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ image: imageData })
+            });
+
+            const data = await response.json();
+
+            const mood = data.mood || 'null';
+            currentMood = mood;
+            if (data.emotion) {
+                document.getElementById('detectedEmotion').textContent = data.emotion.toUpperCase();
+                document.getElementById('confidence').textContent = Math.round(data.confidence * 100);
+                document.getElementById('emotionResult').style.display = 'block';
+                document.getElementById('loadingPlaceholder').style.display = 'none';
+                document.getElementById('recommendationsSection').style.display = 'block';
+                loadSongRecommendations(mood);
+            } else {
+                alert('Could not detect face. Please try again.');
+            }
+        } catch (error) {
+            console.error('Detection error:', error);
+        } finally {
+            scanLine.style.animationDuration = '3s';
+        }
+    }
+
+    async function loadSongRecommendations(mood) {
+        try {
+            const response = await fetch('{% url "get_songs" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ mood: mood, language: currentLanguage })
+            });
+
+            const data = await response.json();
+
+            const songsContainer = document.getElementById('songsContainer');
+            songsContainer.innerHTML = '';
+
+            if (data.songs && data.songs.length > 0) {
+                data.songs.forEach(song => {
+                    const songCard = document.createElement('div');
+                    songCard.className = 'song-card';
+                    songCard.style.cursor = 'pointer';
+                    songCard.onclick = () => playSong(song.youtube_id, song.id, song.title);
+                    songCard.innerHTML = `
+                    <div class="spotlight"></div>
+                    <div class="song-thumb-wrapper">
                         <img src="${song.thumbnail_url}" alt="${song.title}" class="song-thumbnail">
-                        <div class="card-body">
-                            <h6 class="card-title" title="${song.title}">${song.title.substring(0, 30)}...</h6>
-                            <p class="card-text text-muted small">${song.artist.substring(0, 25)}...</p>
-                            <button onclick="playSong('${song.youtube_id}', ${song.id}, '${song.title}')" 
-                                    class="btn btn-sm btn-primary w-100">
-                                <i class="fas fa-play"></i> Play
-                            </button>
+                        <div class="card-img-overlay d-flex align-items-center justify-content-center opacity-0 hover-opacity-100 transition" style="pointer-events: none;">
+                             <div class="btn btn-primary rounded-circle p-3">
+                                <i class="fas fa-play"></i>
+                            </div>
                         </div>
                     </div>
+                    <div class="p-3">
+                        <h6 class="fw-bold mb-1 text-truncate">${song.title}</h6>
+                        <p class="text-white-50 small mb-0 text-truncate">${song.artist}</p>
+                    </div>
                 `;
-                songsContainer.appendChild(songCard);
-            });
-        } else {
-            songsContainer.innerHTML = '<p class="text-muted text-center col-12">No songs found</p>';
+                    songsContainer.appendChild(songCard);
+                });
+            } else {
+                songsContainer.innerHTML = '<p class="text-muted text-center col-12">No songs found</p>';
+            }
+
+            document.getElementById('songsContainer').style.display = 'grid';
+        } catch (error) {
+            alert('Error loading songs: ' + error.message);
+            console.error('Song loading error:', error);
         }
-        
-        document.getElementById('songsContainer').style.display = 'grid';
-    } catch (error) {
-        alert('Error loading songs: ' + error.message);
-        console.error('Song loading error:', error);
-    } finally {
-        document.getElementById('songsLoadingSpinner').style.display = 'none';
-    }
-}
-
-function _createYTPlayer(youtubeId, onReadyCb) {
-    if (ytPlayer) {
-        ytPlayer.loadVideoById(youtubeId);
-        if (onReadyCb) onReadyCb();
-        return;
     }
 
-    ytPlayer = new YT.Player('youtubePlayer', {
-        height: '1',
-        width: '1',
-        videoId: youtubeId,
-        playerVars: { 'autoplay': 1, 'controls': 0, 'rel': 0, 'modestbranding': 1 },
-        events: {
-            'onReady': function(event) {
-                event.target.playVideo();
-                if (onReadyCb) onReadyCb();
-            },
-            'onStateChange': function(event) {
-                // handle ended
-                if (event.data === YT.PlayerState.ENDED) {
-                    // hide controls if needed
+    function _createYTPlayer(youtubeId, onReadyCb) {
+        if (ytPlayer) {
+            ytPlayer.loadVideoById(youtubeId);
+            if (onReadyCb) onReadyCb();
+            return;
+        }
+
+        ytPlayer = new YT.Player('youtubePlayer', {
+            height: '1',
+            width: '1',
+            videoId: youtubeId,
+            playerVars: { 'autoplay': 1, 'controls': 0, 'rel': 0, 'modestbranding': 1 },
+            events: {
+                'onReady': function (event) {
+                    event.target.playVideo();
+                    if (onReadyCb) onReadyCb();
+                },
+                'onStateChange': function (event) {
+                    // handle ended
+                    if (event.data === YT.PlayerState.ENDED) {
+                        // hide controls if needed
+                    }
                 }
             }
-        }
-    });
-}
+        });
+    }
 
-function playSong(youtubeId, songId, songTitle) {
-    // Log the play action first
-    fetch('{% url "play_song" %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({ 
-            song_id: songId, 
-            emotion: document.getElementById('detectedEmotion').textContent 
-        })
-    }).then(response => {
-        // Navigate to dedicated player page
-        window.location.href = `/player/${songId}/`;
-    }).catch(error => console.error('Error logging play:', error));
-}
+    function playSong(youtubeId, songId, songTitle) {
+        // Log the play action first
+        fetch('{% url "play_song" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                song_id: songId,
+                emotion: document.getElementById('detectedEmotion').textContent
+            })
+        }).then(response => {
+            // Navigate to dedicated player page
+            window.location.href = `/player/${songId}/`;
+        }).catch(error => console.error('Error logging play:', error));
+    }
+
+    // Spotlight effect helper
+    document.addEventListener('mousemove', e => {
+        const cards = document.querySelectorAll('.card, .emotion-display, .song-card');
+        cards.forEach(card => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            card.style.setProperty('--x', `${x}px`);
+            card.style.setProperty('--y', `${y}px`);
+        });
+    });
 </script>
 {% endblock %}

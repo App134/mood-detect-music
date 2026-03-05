@@ -14,23 +14,21 @@ def player_page(request, song_id):
     user_profile = UserProfile.objects.get(user=request.user)
     song = get_object_or_404(Song, id=song_id)
     is_liked = LikedSong.objects.filter(user=request.user, song=song).exists()
-    video_details = None
-    try:
-        yt = YouTubeAPI()
-        video_details = yt.get_video_details(song.youtube_id)
-    except Exception:
-        video_details = None
     
     # Get previous and next songs (same mood and language)
     prev_song = Song.objects.filter(
         mood=song.mood,
         language=song.language,
+        audio_file__isnull=False
+    ).exclude(audio_file__exact='').filter(
         id__lt=song.id
     ).order_by('-id').first()
     
     next_song = Song.objects.filter(
         mood=song.mood,
         language=song.language,
+        audio_file__isnull=False
+    ).exclude(audio_file__exact='').filter(
         id__gt=song.id
     ).order_by('id').first()
     
@@ -38,7 +36,6 @@ def player_page(request, song_id):
         'user_profile': user_profile,
         'song': song,
         'is_liked': is_liked,
-        'video_details': video_details,
         'prev_song': prev_song,
         'next_song': next_song
     })

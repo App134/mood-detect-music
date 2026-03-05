@@ -34,8 +34,8 @@ def signup_view(request):
             user = form.save()
             # UserProfile is automatically created by signals.py
             username = form.cleaned_data.get('username')
-            messages.success(request, f'Account created for {username}. Please log in.')
-            return redirect('login')
+            messages.success(request, f'Account created for {username}. Please log in to continue.')
+            return redirect('login')  # Redirect to login page instead of home
         else:
             for field, errors in form.errors.items():
                 for error in errors:
@@ -150,6 +150,8 @@ def detect_emotion(request):
 def get_song_recommendations(request):
     """AJAX endpoint to get song recommendations based on mood and language"""
     try:
+        import random
+        
         data = json.loads(request.body)
         mood = data.get('mood', 'neutral')
         language = data.get('language', 'en')
@@ -159,59 +161,27 @@ def get_song_recommendations(request):
         # Map 'null' (no face) to 'neutral' for song search
         search_mood = 'neutral' if mood == 'null' else mood
 
-        # Try to get from database first
-        songs_qs = Song.objects.filter(mood=search_mood, language=language)
-        songs = list(songs_qs[:12])
-
-        # If fewer than 5 songs available, fetch from YouTube API and/or fallback
-        if len(songs) < 5:
-            youtube = YouTubeAPI()
-            song_data = youtube.search_songs_by_mood_and_language(mood, language)
-
-            # Save fetched songs to database
-            for song_info in song_data:
-                if song_info.get('youtube_id'):
-                    Song.objects.get_or_create(
-                        youtube_id=song_info['youtube_id'],
-                        defaults={
-                            'title': song_info.get('title', '')[:255],
-                            'artist': song_info.get('artist', '')[:255],
-                            'mood': search_mood,
-                            'language': language,
-                            'thumbnail_url': song_info.get('thumbnail_url', '')
-                        }
-                    )
-
-            # Re-query DB and ensure at least 5 entries using fallback if necessary
-            songs = list(Song.objects.filter(mood=search_mood, language=language)[:12])
-            if len(songs) < 5:
-                # fill from fallback source directly (no DB required)
-                fallback = youtube._get_fallback_songs(mood, language)
-                for f in fallback:
-                    # ensure not already in songs
-                    if not any(s.youtube_id == f['youtube_id'] for s in songs):
-                        # create in DB for consistency
-                        obj, created = Song.objects.get_or_create(
-                            youtube_id=f['youtube_id'],
-                            defaults={
-                                'title': f.get('title', '')[:255],
-                                'artist': f.get('artist', '')[:255],
-                                'mood': mood,
-                                'language': language,
-                                'thumbnail_url': f.get('thumbnail_url', '')
-                            }
-                        )
-                        songs.append(obj)
-                    if len(songs) >= 5:
-                        break
+        # Get songs from database that match BOTH mood and language (must have audio file)
+        songs_qs = Song.objects.filter(mood=search_mood, language=language).exclude(audio_file__exact='')
+        all_songs = list(songs_qs)
+        
+        # If no songs in that language, fallback to same mood, any language
+        if len(all_songs) == 0:
+            songs_qs = Song.objects.filter(mood=search_mood).exclude(audio_file__exact='')
+            all_songs = list(songs_qs)
+        
+        # Randomly select up to 10 songs
+        songs = random.sample(all_songs, min(10, len(all_songs))) if len(all_songs) > 0 else []
         
         songs_data = [{
             'id': song.id,
-            'youtube_id': song.youtube_id,
             'title': song.title,
             'artist': song.artist,
-            'thumbnail_url': song.thumbnail_url,
-            'mood': song.mood
+            'thumbnail_url': song.thumbnail_url or 'https://via.placeholder.com/200x200?text=MoodMusic',
+            'mood': song.mood,
+            'language': song.language,
+            'youtube_id': song.youtube_id,
+            'audio_url': song.audio_file.url if song.audio_file else None
         } for song in songs]
         
         return JsonResponse({'songs': songs_data})
