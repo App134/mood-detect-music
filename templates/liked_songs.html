@@ -1,163 +1,119 @@
 {% extends 'base.html' %}
 
-{% block title %}Liked Songs - MoodMusic{% endblock %}
+{% block title %}Liked Songs - MinuMusic{% endblock %}
 
-{% block extra_css %}
+
+
+{% block content %}
 <style>
-    .likes-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 20px;
-        padding: 20px 0;
+    .create-playlist-form {
+        margin-top: 10px;
+        transition: transform 0.3s ease;
     }
-
-    .song-card {
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
+    .create-playlist-form:hover {
+        transform: scale(1.02);
     }
-
-    .song-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
-    }
-
-    .song-thumbnail {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-    }
-
-    .song-info {
-        padding: 15px;
-    }
-
-    .song-title {
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-bottom: 5px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .song-artist {
-        color: #666;
-        font-size: 0.9rem;
-        margin-bottom: 8px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .song-mood {
-        display: inline-block;
-        background: #f0f0f0;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        color: #333;
-        text-transform: capitalize;
-        margin-bottom: 12px;
-    }
-
-    .song-actions {
-        display: flex;
-        gap: 10px;
-    }
-
-    .btn-play, .btn-unlike {
-        flex: 1;
-        padding: 8px 12px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        transition: all 0.3s ease;
-    }
-
-    .btn-play {
-        background: #6366f1;
-        color: white;
-    }
-
-    .btn-play:hover {
-        background: #4f46e5;
-    }
-
-    .btn-unlike {
-        background: #f3f4f6;
-        color: #333;
-    }
-
-    .btn-unlike:hover {
-        background: #e5e7eb;
-    }
-
     .empty-state {
         text-align: center;
         padding: 60px 20px;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
     }
-
     .empty-icon {
         font-size: 4rem;
-        color: #ccc;
+        color: rgba(255, 255, 255, 0.2);
         margin-bottom: 20px;
     }
-
     .empty-text {
-        color: #999;
-        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.2rem;
         margin-bottom: 20px;
     }
-
     .empty-link {
-        color: #6366f1;
+        display: inline-block;
+        padding: 12px 24px;
+        background: rgba(139, 92, 246, 0.2);
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        color: #d8b4fe;
+        border-radius: 12px;
         text-decoration: none;
         font-weight: 600;
+        transition: all 0.3s ease;
     }
-
     .empty-link:hover {
-        text-decoration: underline;
+        background: rgba(139, 92, 246, 0.4);
+        color: #fff;
+        transform: translateY(-2px);
     }
 </style>
-{% endblock %}
-
-{% block content %}
-<div class="container">
-    <h1 class="text-white mb-4 text-center">
-        <i class="fas fa-heart"></i> My Liked Songs
+<div class="container pb-5">
+    <h1 class="text-white mb-3 text-center">
+        <i class="fas fa-heart text-danger"></i> My Liked Songs
     </h1>
-
-    {% if liked_songs %}
-        <div class="likes-grid">
-            {% for like in liked_songs %}
-                <div class="song-card">
-                    <img src="{{ like.song.thumbnail_url }}" alt="{{ like.song.title }}" class="song-thumbnail">
-                    <div class="song-info">
-                        <div class="song-title" title="{{ like.song.title }}">{{ like.song.title }}</div>
-                        <div class="song-artist" title="{{ like.song.artist }}">{{ like.song.artist }}</div>
-                        <div class="song-mood">
-                            <i class="fas fa-face-smile"></i> {{ like.song.mood|title }}
-                        </div>
-                        <div class="song-actions">
-                            <a href="{% url 'player' like.song.id %}" class="btn-play">
-                                <i class="fas fa-play"></i> Play
-                            </a>
-                            <button class="btn-unlike" onclick="unlikeSong({{ like.song.id }}, this)">
-                                <i class="fas fa-trash"></i> Remove
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
+    
+    <div class="d-flex justify-content-center mb-5">
+        <div class="create-playlist-form d-flex shadow-sm rounded-pill p-1" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);">
+            <input type="text" id="newPlaylistName" class="form-control bg-transparent text-white border-0 shadow-none ps-3" placeholder="Name your new playlist..." style="width: 250px;">
+            <button class="btn btn-primary rounded-pill px-4" style="white-space: nowrap; background: linear-gradient(135deg, #8B5CF6, #6D28D9); border: none; font-weight: 600;" onclick="createPlaylist()">Create</button>
         </div>
-    {% else %}
+    </div>
+
+    <div class="premium-list-container">
+        {% if liked_songs %}
+            <table class="premium-list-table">
+                <thead>
+                    <tr>
+                        <th class="track-index-col">#</th>
+                        <th>Title</th>
+                        <th>Album</th>
+                        <th>Date Added</th>
+                        <th class="track-duration-col"><i class="far fa-clock"></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for like in liked_songs %}
+                    <tr class="premium-row js-play-song" data-id="{{ like.song.id }}" data-title="{{ like.song.title|escapejs }}" data-artist="{{ like.song.artist|escapejs }}" data-thumb="{% if like.song.thumbnail_image %}{{ like.song.thumbnail_image.url|escapejs }}{% elif like.song.thumbnail_url %}{{ like.song.thumbnail_url|escapejs }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}" data-url="{% if like.song.audio_file %}{{ like.song.audio_file.url|escapejs }}{% else %}#{% endif %}">
+                        <td class="track-index-col">
+                            <div class="track-index-wrapper">
+                                <span class="track-index-text">{{ forloop.counter }}</span>
+                                <i class="fas fa-play track-play-icon"></i>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="track-info-cell">
+                                <img src="{% if like.song.thumbnail_image %}{{ like.song.thumbnail_image.url }}{% elif like.song.thumbnail_url %}{{ like.song.thumbnail_url }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}" alt="{{ like.song.title }}" class="track-thumb-img">
+                                <div class="text-truncate">
+                                    <div class="track-title text-truncate">{{ like.song.title }}</div>
+                                    <div class="track-artist text-truncate">{{ like.song.artist }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="track-album text-truncate">Single</div>
+                        </td>
+                        <td>
+                            <div class="track-date text-truncate">{{ like.liked_at|date:"M j, Y" }}</div>
+                        </td>
+                        <td class="track-duration-col">
+                            <div class="track-actions-wrapper">
+                                <i class="fas fa-check-circle saved-check" title="Liked"></i>
+                                <span class="duration-format-node" data-duration="{{ like.song.duration|default:'' }}"></span>
+                                <button class="btn-more-options" onclick="event.stopPropagation(); unlikeSong({{ like.song.id }}, this)" title="Remove from Liked Songs">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
         <div class="empty-state">
             <div class="empty-icon">
-                <i class="fas fa-heart-empty"></i>
+                <i class="fas fa-heart-crack"></i>
             </div>
             <div class="empty-text">No liked songs yet</div>
             <p class="text-muted mb-4">Start detecting your mood and like songs to see them here!</p>
@@ -182,18 +138,58 @@ function unlikeSong(songId, btn) {
     .then(data => {
         if (!data.liked) {
             // Remove the card from DOM with animation
-            const card = btn.closest('.song-card');
-            card.style.transition = 'opacity 0.3s ease';
-            card.style.opacity = '0';
-            setTimeout(() => card.remove(), 300);
+            const row = btn.closest('.playlist-row');
+            row.style.transition = 'opacity 0.3s ease';
+            row.style.opacity = '0';
+            setTimeout(() => row.remove(), 300);
             
             // If no songs left, reload page to show empty state
-            if (document.querySelectorAll('.song-card').length === 0) {
+            if (document.querySelectorAll('.playlist-row').length === 0) {
                 setTimeout(() => location.reload(), 300);
             }
         }
     })
     .catch(error => console.error('Error removing like:', error));
 }
+
+function createPlaylist() {
+    const nameInput = document.getElementById('newPlaylistName');
+    if (!nameInput) return;
+    const name = nameInput.value.trim();
+    if (!name) return;
+    
+    fetch('/api/create-playlist/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ name: name })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            nameInput.value = ''; // clear it
+        } else {
+            console.error(data.error);
+        }
+    });
+}
+
+function formatDurations() {
+    document.querySelectorAll('.duration-formatter').forEach(el => {
+        let dur = el.getAttribute('data-duration');
+        if (dur && !isNaN(dur)) {
+            dur = parseInt(dur);
+            const m = Math.floor(dur / 60);
+            const s = dur % 60;
+            el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+        } else {
+            // Default random standard duration if missing locally
+            const randomSec = Math.floor(Math.random() * 60);
+            el.textContent = '3:' + (randomSec < 10 ? '0' : '') + randomSec;
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', formatDurations);
+document.body.addEventListener('htmx:load', formatDurations);
 </script>
 {% endblock %}

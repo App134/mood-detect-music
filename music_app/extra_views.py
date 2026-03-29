@@ -67,3 +67,15 @@ def toggle_like(request):
         return JsonResponse({'liked': True})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@login_required(login_url='login')
+def get_song_status(request):
+    """Get like status for a given song (AJAX)"""
+    try:
+        song_id = request.GET.get('song_id')
+        if not song_id:
+            return JsonResponse({'is_liked': False})
+        is_liked = LikedSong.objects.filter(user=request.user, song_id=song_id).exists()
+        return JsonResponse({'is_liked': is_liked})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

@@ -40,16 +40,16 @@ def predict_emotion_from_image(img_bgr):
     # Detect faces
     # faces = _face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
     faces = _face_cascade.detectMultiScale(
-    gray,
-    scaleFactor=1.2,
-    minNeighbors=3,
-    minSize=(60, 60)
-)
+        gray,
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(30, 30)
+    )
 
 
     if len(faces) == 0:
-    # Fallback when face is not detected
-        return "neutral", 0.50
+        # Fallback when face is not detected
+        return None, 0.0
 
 
     # Pick the largest detected face

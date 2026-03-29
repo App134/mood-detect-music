@@ -1,187 +1,434 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard - MoodMusic{% endblock %}
+{% block title %}Dashboard - MinuMusic{% endblock %}
 
-{% block extra_css %}
+
+
+{% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-    .stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 15px;
-        padding: 20px;
+    .glass-stat-card {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 24px;
         color: white;
-        text-align: center;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .glass-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+        pointer-events: none;
+    }
+
+    .glass-stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 255, 255, 0.2);
     }
     
+    .stat-icon-wrapper {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        margin-bottom: 16px;
+    }
+
+    .stat-purple {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.05));
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        color: #a78bfa;
+    }
+
+    .glass-stat-card:hover .stat-purple {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(139, 92, 246, 0.1));
+    }
+    
+    .stat-pink {
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.05));
+        border: 1px solid rgba(236, 72, 153, 0.3);
+        color: #f472b6;
+    }
+
+    .glass-stat-card:hover .stat-pink {
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.4), rgba(236, 72, 153, 0.1));
+    }
+
+    .stat-blue {
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(56, 189, 248, 0.05));
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        color: #7dd3fc;
+    }
+
+    .glass-stat-card:hover .stat-blue {
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(56, 189, 248, 0.1));
+    }
+
     .stat-number {
-        font-size: 2.5rem;
-        font-weight: bold;
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 4px;
+        letter-spacing: -1px;
     }
     
     .stat-label {
-        font-size: 0.9rem;
-        opacity: 0.9;
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 500;
     }
 
-    .mood-chart-card {
-        border-radius: 15px;
-        border: none;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        max-height: 350px;
-        overflow: hidden;
+    .glass-panel {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 24px;
+        transition: all 0.3s ease;
+    }
+
+    .glass-panel:hover {
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .panel-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #fff;
+    }
+    
+    .panel-title i {
+        color: var(--primary);
+    }
+    
+    /* Recent Activity List */
+    .activity-list {
         display: flex;
         flex-direction: column;
+        gap: 12px;
     }
-
-    .mood-chart-card .card-body {
-        padding: 15px !important;
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.03);
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+    
+    .activity-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.1);
+        transform: translateX(4px);
+    }
+    
+    .activity-thumb {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-right: 16px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    
+    .activity-info {
         flex: 1;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        min-width: 0;
     }
-
-    .mood-chart-card h5 {
+    
+    .activity-song {
+        font-weight: 600;
         font-size: 1rem;
-        margin-bottom: 8px !important;
+        color: #fff;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .activity-artist {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.6);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .activity-meta {
+        text-align: right;
+        min-width: 100px;
+    }
+    
+    .mood-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+        margin-bottom: 4px;
+        background: rgba(255,255,255,0.1);
+    }
+    
+    .activity-date {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.5);
     }
 
-    #moodChart {
-        max-height: 250px !important;
-        width: 100% !important;
-        height: auto !important;
+    /* Chart Container */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
-
-    @media (max-width: 768px) {
-        .mood-chart-card {
-            max-height: auto;
-        }
-        
-        .mood-chart-card .card-body {
-            padding: 15px !important;
-        }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
     }
 </style>
-{% endblock %}
-
-{% block content %}
-<div class="container">
-    <h1 class="text-white mb-4 text-center">
-        <i class="fas fa-chart-bar"></i> Your Dashboard
-    </h1>
+<div class="container-fluid py-4" style="max-width: 1200px; margin: 0 auto;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold m-0"><i class="fas fa-chart-pie text-primary me-2"></i> Your Statistics</h2>
+    </div>
     
-    <div class="row mb-4">
+    {% if total_songs_played > 0 %}
+    <!-- Stat Cards Row -->
+    <div class="row g-4 mb-4">
         <div class="col-md-4">
-            <div class="stat-card">
-                <i class="fas fa-compact-disc" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <div class="stat-number">{{ total_songs_played }}</div>
-                <div class="stat-label">Songs Played</div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="stat-card" style="background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);">
-                <i class="fas fa-face-smile" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <div class="stat-number">{{ mood_stats|length }}</div>
-                <div class="stat-label">Different Moods</div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);">
-                <i class="fas fa-calendar-days" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                <div class="stat-number">
-                    {% if total_songs_played %}
-                        {{ total_songs_played|pluralize:"day" }}
-                    {% else %}
-                        0 days
-                    {% endif %}
+            <div class="glass-stat-card">
+                <div class="stat-icon-wrapper stat-purple">
+                    <i class="fas fa-play"></i>
                 </div>
+                <div class="stat-number">{{ total_songs_played }}</div>
+                <div class="stat-label">Total Songs Played</div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="glass-stat-card">
+                <div class="stat-icon-wrapper stat-pink">
+                    <i class="fas fa-face-smile"></i>
+                </div>
+                <div class="stat-number">{{ mood_stats|length }}</div>
+                <div class="stat-label">Different Moods Detected</div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="glass-stat-card">
+                <div class="stat-icon-wrapper stat-blue">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-number">{{ active_days }}</div>
                 <div class="stat-label">Active Days</div>
             </div>
         </div>
     </div>
     
-    <div class="row">
-        <div class="col-lg-6 mx-auto">
-            <div class="card mood-chart-card">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="fas fa-chart-pie"></i> Mood Distribution
-                    </h5>
-                    
-                    {% if mood_stats %}
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 200px;">
-                            <canvas id="moodChart"></canvas>
+    <div class="row g-4">
+        <!-- Mood Distribution Chart -->
+        <div class="col-lg-5">
+            <div class="glass-panel h-100 mb-0">
+                <h5 class="panel-title"><i class="fas fa-chart-pie"></i> Mood Distribution</h5>
+                <div class="chart-container">
+                    <canvas id="moodChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="col-lg-7">
+            <div class="glass-panel h-100 mb-0">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="panel-title m-0"><i class="fas fa-clock-rotate-left"></i> Recent Activity</h5>
+                    <a href="{% url 'playlist_history' %}" class="btn btn-sm btn-outline-light rounded-pill" style="font-size: 0.8rem; backdrop-filter: blur(5px); background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">View All</a>
+                </div>
+                
+                <div class="activity-list">
+                    {% for item in recent_activity %}
+                    <div class="activity-item">
+                        {% if item.song.thumbnail_image %}
+                            <img src="{{ item.song.thumbnail_image.url }}" alt="{{ item.song.title }}" class="activity-thumb">
+                        {% elif item.song.thumbnail_url %}
+                            <img src="{{ item.song.thumbnail_url }}" alt="{{ item.song.title }}" class="activity-thumb">
+                        {% else %}
+                            <div class="activity-thumb d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.1);"><i class="fas fa-music text-white-50"></i></div>
+                        {% endif %}
+                        
+                        <div class="activity-info">
+                            <div class="activity-song">{{ item.song.title }}</div>
+                            <div class="activity-artist">{{ item.song.artist }}</div>
                         </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <p class="text-muted" style="font-size: 0.9rem;">No data available yet. Start using the mood detection feature!</p>
+                        
+                        <div class="activity-meta">
+                            <span class="mood-badge 
+                                {% if item.emotion_detected == 'happy' %}bg-success bg-opacity-25 text-success
+                                {% elif item.emotion_detected == 'sad' %}bg-primary bg-opacity-25 text-primary
+                                {% elif item.emotion_detected == 'angry' %}bg-danger bg-opacity-25 text-danger
+                                {% elif item.emotion_detected == 'fear' %}bg-warning bg-opacity-25 text-warning
+                                {% elif item.emotion_detected == 'surprise' %}bg-info bg-opacity-25 text-info
+                                {% else %}bg-secondary bg-opacity-25 text-light{% endif %}
+                            ">
+                                {{ item.emotion_detected }}
+                            </span>
+                            <div class="activity-date">{{ item.played_at|timesince }} ago</div>
                         </div>
-                    {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-white-50">
+                        No recent activity found.
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="glass-panel empty-state mt-4">
+        <i class="fas fa-chart-line"></i>
+        <h3>No stats available yet</h3>
+        <p class="mb-4">Start using mood detection and playing music to see your personalized statistics here!</p>
+        <a href="{% url 'emotion_detection' %}" class="btn btn-primary rounded-pill px-4">
+            <i class="fas fa-face-smile me-2"></i> Detect Mood Now
+        </a>
+    </div>
+    {% endif %}
 </div>
 
-{% if mood_stats %}
+{% if total_songs_played > 0 %}
 <script>
-    const moodData = {
-        {% for mood, count in mood_stats.items %}
-            '{{ mood }}': {{ count }},
-        {% endfor %}
-    };
-    
-    const ctx = document.getElementById('moodChart').getContext('2d');
-    const chart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(moodData),
-            datasets: [{
-                data: Object.values(moodData),
-                backgroundColor: [
-                    '#6366f1',
-                    '#ec4899',
-                    '#10b981',
-                    '#f59e0b',
-                    '#ef4444',
-                    '#3b82f6',
-                    '#8b5cf6',
-                    '#f43f5e'
-                ],
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 8,
-                        font: {
-                            size: 10
-                        },
-                        usePointStyle: true,
-                        pointStyle: 'circle'
-                    }
-                },
-                tooltip: {
-                    padding: 6,
-                    titleFont: {
-                        size: 10
+    document.addEventListener('DOMContentLoaded', function() {
+        initMoodChart();
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function() {
+        if(document.getElementById('moodChart')) {
+            initMoodChart();
+        }
+    });
+
+    function initMoodChart() {
+        const ctx = document.getElementById('moodChart');
+        if (!ctx) return;
+        
+        // Ensure chart does not get duplicated on HTMX swap
+        if (window.myMoodChart) {
+            window.myMoodChart.destroy();
+        }
+        
+        const moodData = {
+            {% for mood, count in mood_stats.items %}
+                '{{ mood|title }}': {{ count }},
+            {% endfor %}
+        };
+        
+        // Standardize colors based on mood
+        const moodColors = {
+            'Happy': '#10b981',    // Emerald
+            'Sad': '#3b82f6',      // Blue
+            'Angry': '#ef4444',    // Red
+            'Fear': '#f59e0b',     // Amber
+            'Surprise': '#0ea5e9', // Sky
+            'Neutral': '#8b5cf6',  // Violet
+            'Default': '#64748b'   // Slate
+        };
+        
+        const labels = Object.keys(moodData);
+        const data = Object.values(moodData);
+        const backgroundColor = labels.map(l => moodColors[l] || moodColors['Default']);
+        
+        window.myMoodChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: backgroundColor,
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: {
+                                size: 12,
+                                family: "'Outfit', sans-serif"
+                            },
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
                     },
-                    bodyFont: {
-                        size: 9
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: 'rgba(255, 255, 255, 0.8)',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    let percentage = (context.parsed / {{ total_songs_played }}) * 100;
+                                    label += context.parsed + ' (' + percentage.toFixed(1) + '%)';
+                                }
+                                return label;
+                            }
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 </script>
 {% endif %}
 {% endblock %}

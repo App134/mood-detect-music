@@ -94,3 +94,32 @@ class LikedSong(models.Model):
     class Meta:
         unique_together = ('user', 'song')
         ordering = ['-liked_at']
+
+
+class Playlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s Playlist: {self.name}"
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def get_cover_songs(self):
+        """Returns the first 4 songs in the playlist for cover generation"""
+        return self.songs.all().select_related('song')[:4]
+
+
+class PlaylistSong(models.Model):
+    playlist = models.ForeignKey(Playlist, on_delete=models.CASCADE, related_name='songs')
+    song = models.ForeignKey(Song, on_delete=models.CASCADE)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.song.title} in {self.playlist.name}"
+
+    class Meta:
+        unique_together = ('playlist', 'song')
+        ordering = ['-added_at']

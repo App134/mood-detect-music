@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Playlist {{ playlist.name }} - MinuMusic{% endblock %}
+
+{% block extra_css %}
+<style>
+
+
+    /* Playlist Header Grid */
+    .playlist-header {
+        display: flex;
+        align-items: flex-end;
+        gap: 30px;
+        padding: 40px 0;
+        margin-bottom: 20px;
+    }
+    .playlist-header-cover {
+        width: 232px;
+        height: 232px;
+        min-width: 232px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 2px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .playlist-header-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .playlist-header-info h1 {
+        font-size: 4.5rem;
+        font-weight: 800;
+        margin: 0;
+        color: #fff;
+        line-height: 1;
+        letter-spacing: -2px;
+    }
+    .playlist-header-info .meta {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 15px;
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .playlist-header {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .playlist-header-info h1 {
+            font-size: 2.5rem;
+            letter-spacing: -1px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-5">
+    <div class="playlist-header">
+        <div class="playlist-header-cover">
+            {% with covers=playlist.get_cover_songs songs_count=playlist_songs.count %}
+                {% for ps in covers %}
+                    <img src="{% if ps.song.thumbnail_image %}{{ ps.song.thumbnail_image.url }}{% elif ps.song.thumbnail_url %}{{ ps.song.thumbnail_url }}{% else %}https://via.placeholder.com/150x150?text=...{% endif %}" alt="Cover">
+                {% endfor %}
+                
+                {% if songs_count < 1 %}
+                    <div style="background: #282828;"></div><div style="background: #282828;"></div><div style="background: #282828;"></div><div style="background: #282828;"></div>
+                {% elif songs_count < 2 %}
+                    <div style="background: #282828;"></div><div style="background: #282828;"></div><div style="background: #282828;"></div>
+                {% elif songs_count < 3 %}
+                    <div style="background: #282828;"></div><div style="background: #282828;"></div>
+                {% elif songs_count < 4 %}
+                    <div style="background: #282828;"></div>
+                {% endif %}
+            {% endwith %}
+        </div>
+        <div class="playlist-header-info">
+            <span class="text-uppercase fw-bold" style="font-size: 0.8rem; letter-spacing: 1px;">Playlist</span>
+            <h1>{{ playlist.name }}</h1>
+            <div class="meta">
+                <span class="text-white">{{ user.first_name|default:user.username }}</span> • 
+                {{ playlist_songs.count }} songs
+            </div>
+        </div>
+    </div>
+
+    {% if playlist_songs %}
+    <div class="premium-list-container">
+        <table class="premium-list-table">
+                <thead>
+                    <tr>
+                        <th class="track-index-col">#</th>
+                        <th>Title</th>
+                        <th>Album</th>
+                        <th>Date Added</th>
+                        <th class="track-duration-col"><i class="far fa-clock"></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for ps in playlist_songs %}
+                    <tr class="premium-row js-play-song" data-id="{{ ps.song.id }}" data-title="{{ ps.song.title|escapejs }}" data-artist="{{ ps.song.artist|escapejs }}" data-thumb="{% if ps.song.thumbnail_image %}{{ ps.song.thumbnail_image.url|escapejs }}{% elif ps.song.thumbnail_url %}{{ ps.song.thumbnail_url|escapejs }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}" data-url="{% if ps.song.audio_file %}{{ ps.song.audio_file.url|escapejs }}{% else %}#{% endif %}">
+                        <td class="track-index-col">
+                            <div class="track-index-wrapper">
+                                <span class="track-index-text">{{ forloop.counter }}</span>
+                                <i class="fas fa-play track-play-icon"></i>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="track-info-cell">
+                                <img src="{% if ps.song.thumbnail_image %}{{ ps.song.thumbnail_image.url }}{% elif ps.song.thumbnail_url %}{{ ps.song.thumbnail_url }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}" alt="{{ ps.song.title }}" class="track-thumb-img">
+                                <div class="text-truncate">
+                                    <div class="track-title text-truncate">{{ ps.song.title }}</div>
+                                    <div class="track-artist text-truncate">{{ ps.song.artist }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="track-album text-truncate">Single</div>
+                        </td>
+                        <td>
+                            <div class="track-date text-truncate">{{ ps.added_at|date:"M j, Y" }}</div>
+                        </td>
+                        <td class="track-duration-col">
+                            <div class="track-actions-wrapper">
+                                <span class="duration-format-node" data-duration="{{ ps.song.duration|default:'' }}"></span>
+                                <button class="btn-more-options" title="Playlist Options">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+        <div class="empty-state mt-5">
+            <h3 class="text-white-50"><i class="fas fa-music fs-1 mb-3"></i><br>This playlist is empty.</h3>
+            <p class="text-muted">Go to the Home page and discover some new music!</p>
+            <a href="{% url 'home' %}" class="btn btn-outline-primary mt-3">Go to Home</a>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

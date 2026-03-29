@@ -43,8 +43,10 @@ def detect_emotion_from_frame(frame):
                 # _ai_detector returns (label, confidence)
                 if label is None:
                     return None, 'null', 0.0
-                # Map label directly to mood (labels include all target moods)
-                mood = label if label in ['happy', 'sad', 'fear', 'surprise', 'disgust', 'neutral'] else 'neutral'
+                # Map label to available moods in the Song model
+                mood = label if label in ['happy', 'sad', 'fear', 'surprise', 'neutral', 'angry'] else 'neutral'
+                if label == 'disgust':
+                    mood = 'angry'
                 return label, mood, float(conf)
             except FileNotFoundError:
                 # model file missing inside ai; fall back
@@ -54,7 +56,12 @@ def detect_emotion_from_frame(frame):
 
         # Fallback: detect face with Haar cascade
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = _face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=3, minSize=(60, 60))
+        faces = _face_cascade.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(30, 30)
+        )
         if len(faces) == 0:
             return None, 'null', 0.0
 

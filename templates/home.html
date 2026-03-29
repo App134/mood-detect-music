@@ -3,129 +3,558 @@
 {% block title %}Home - MoodMusic{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row align-items-center mb-5">
-        <div class="col-lg-8 mx-auto text-center">
-            <h1 class="display-4 fw-bold text-white mb-3" style="animation: fadeIn 1s ease-out;">
-                Welcome back, <span class="text-primary">{{ user.first_name|default:user.username }}</span>
-            </h1>
-            <p class="lead text-white-50">What's the soundtrack to your soul today?</p>
+<div class="container-fluid py-4 home-dashboard">
+    <!-- Live Search Bar -->
+    <div class="row mb-4">
+        <div class="col-12 col-md-8 col-lg-6 mx-auto">
+            <div class="search-container position-relative">
+                <div class="input-group glass-search">
+                    <span class="input-group-text bg-transparent border-0 text-white-50 ps-3"><i class="fas fa-search"></i></span>
+                    <input type="text" id="liveSearchInput" class="form-control bg-transparent border-0 text-white shadow-none py-2" placeholder="Search for songs or artists..." autocomplete="off">
+                </div>
+                <div id="searchDropdown" class="search-dropdown glass-dropdown position-absolute w-100 mt-2" style="display: none; z-index: 1000;">
+                    <!-- Results dynamically injected here -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="row g-4 justify-content-center">
-        <!-- Feature Cards -->
-        <div class="col-md-6 col-lg-5">
-            <a href="{% url 'emotion_detection' %}" class="text-decoration-none">
-                <div class="card h-100 border-0 p-4 landing-card">
-                    <div class="card-body text-center d-flex flex-column align-items-center">
-                        <div class="icon-box mb-4">
-                            <i class="fas fa-camera"></i>
-                        </div>
-                        <h3 class="fw-bold mb-3">Detect Mood</h3>
-                        <p class="text-white-50">Sync your emotions with our AI to discover music that understands you.
-                        </p>
-                        <div class="mt-auto pt-3">
-                            <span class="btn btn-primary">Start Session <i class="fas fa-chevron-right ms-2"></i></span>
-                        </div>
-                    </div>
-                </div>
-            </a>
+    <div class="row mb-5">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold text-white mb-2" style="animation: fadeIn 1s ease-out;">
+                Welcome <span class="text-primary">{{ user.first_name|default:user.username }}</span>
+            </h1>
+            <p class="text-white-50">Here is the soundtrack to your soul today.</p>
         </div>
+    </div>
 
-        <div class="col-md-6 col-lg-5">
-            <a href="{% url 'playlist_history' %}" class="text-decoration-none">
-                <div class="card h-100 border-0 p-4 landing-card">
-                    <div class="card-body text-center d-flex flex-column align-items-center">
-                        <div class="icon-box mb-4 icon-pink">
-                            <i class="fas fa-clock-rotate-left"></i>
+    <!-- My Playlists Section (New) -->
+    <div class="music-section mb-5">
+        <h3 class="section-title mb-4"><i class="fas fa-list text-primary me-2"></i> My Playlists</h3>
+        
+        <div class="music-row" id="userPlaylistsGrid">
+            {% if user_playlists %}
+                {% for playlist in user_playlists %}
+                <a href="{% url 'playlist_detail' playlist.id %}" class="text-decoration-none playlist-card-enhanced mx-2">
+                    <div class="playlist-cover-container">
+                        {% with covers=playlist.get_cover_songs songs_count=playlist.songs.count %}
+                        <div class="playlist-cover-grid">
+                            {% for ps in covers %}
+                                <img src="{% if ps.song.thumbnail_image %}{{ ps.song.thumbnail_image.url }}{% elif ps.song.thumbnail_url %}{{ ps.song.thumbnail_url }}{% else %}https://via.placeholder.com/100x100?text=...{% endif %}" alt="Song cover">
+                            {% endfor %}
+                            
+                            {% if songs_count < 1 %}
+                                <div class="placeholder-cover"><i class="fas fa-plus"></i></div>
+                                <div class="placeholder-cover"></div>
+                                <div class="placeholder-cover"></div>
+                                <div class="placeholder-cover"></div>
+                            {% elif songs_count < 2 %}
+                                <div class="placeholder-cover"></div>
+                                <div class="placeholder-cover"></div>
+                                <div class="placeholder-cover"></div>
+                            {% elif songs_count < 3 %}
+                                <div class="placeholder-cover"></div>
+                                <div class="placeholder-cover"></div>
+                            {% elif songs_count < 4 %}
+                                <div class="placeholder-cover"></div>
+                            {% endif %}
                         </div>
-                        <h3 class="fw-bold mb-3">Your Journey</h3>
-                        <p class="text-white-50">Revisit the moods and melodies that defined your past moments.</p>
-                        <div class="mt-auto pt-3">
-                            <span class="btn btn-outline-light border-2">View History <i
-                                    class="fas fa-chevron-right ms-2"></i></span>
-                        </div>
+                        {% endwith %}
                     </div>
-                </div>
-            </a>
+                    <div class="playlist-name-info">
+                        <div class="playlist-card-title text-truncate">{{ playlist.name }}</div>
+                        <div class="playlist-card-count">{{ playlist.songs.count }} songs</div>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-white-50 mt-2">You haven't created any custom playlists yet. Create one above!</p>
+            {% endif %}
         </div>
+    </div>
 
-        <div class="col-md-6 col-lg-5">
-            <a href="{% url 'dashboard' %}" class="text-decoration-none">
-                <div class="card h-100 border-0 p-4 landing-card">
-                    <div class="card-body text-center d-flex flex-column align-items-center">
-                        <div class="icon-box mb-4 icon-blue">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                        <h3 class="fw-bold mb-3">Analytics</h3>
-                        <p class="text-white-50">Dive deep into your emotional music patterns and listening habits.</p>
-                        <div class="mt-auto pt-3">
-                            <span class="btn btn-outline-light border-2">Explore Data <i
-                                    class="fas fa-chevron-right ms-2"></i></span>
-                        </div>
-                    </div>
+    <!-- Recommended for You Section -->
+    <div class="music-section mb-5">
+        <h3 class="section-title mb-4"><i class="fas fa-star text-warning me-2"></i> Recommended for You</h3>
+        {% if my_playlist %}
+        <div class="music-row">
+            {% for song in my_playlist %}
+            <div class="music-card">
+                <div class="music-card-img-wrapper">
+                    <img src="{% if song.thumbnail_image %}{{ song.thumbnail_image.url }}{% elif song.thumbnail_url %}{{ song.thumbnail_url }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}"
+                        alt="{{ song.title }}" class="music-card-img">
+                    <a href="javascript:void(0);" class="play-overlay border-0 js-play-song" data-id="{{ song.id }}" data-title="{{ song.title|escapejs }}" data-artist="{{ song.artist|escapejs }}" data-thumb="{% if song.thumbnail_image %}{{ song.thumbnail_image.url|escapejs }}{% elif song.thumbnail_url %}{{ song.thumbnail_url|escapejs }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}" data-url="{% if song.audio_file %}{{ song.audio_file.url|escapejs }}{% else %}#{% endif %}">
+                        <i class="fas fa-play"></i>
+                    </a>
+                    <button title="Add to Playlist" class="add-to-playlist-overlay" onclick="openPlaylistModal('{{ song.id }}', '{{ song.title|escapejs }}')">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
-            </a>
+                <div class="music-card-info mt-3">
+                    <h5 class="music-card-title text-truncate">{{ song.title }}</h5>
+                    <p class="music-card-artist text-white-50 small text-truncate mb-0">{{ song.artist }}</p>
+                </div>
+            </div>
+            {% endfor %}
         </div>
+        {% else %}
+        <p class="text-white-50 mt-3">No recommended songs available right now. Detect your mood to get more insights!
+        </p>
+        {% endif %}
+    </div>
 
-        <div class="col-md-6 col-lg-5">
-            <a href="{% url 'language_selection' %}" class="text-decoration-none">
-                <div class="card h-100 border-0 p-4 landing-card">
-                    <div class="card-body text-center d-flex flex-column align-items-center">
-                        <div class="icon-box mb-4 icon-gold">
-                            <i class="fas fa-language"></i>
-                        </div>
-                        <h3 class="fw-bold mb-3">Preferences</h3>
-                        <p class="text-white-50">Switch languages and fine-tune your global music discovery settings.
-                        </p>
-                        <div class="mt-auto pt-3">
-                            <span class="btn btn-outline-light border-2">Settings <i
-                                    class="fas fa-chevron-right ms-2"></i></span>
-                        </div>
-                    </div>
+    <!-- Liked Songs Section -->
+    <div class="music-section mb-5">
+        <h3 class="section-title mb-4"><i class="fas fa-heart text-secondary me-2"></i> Liked Songs</h3>
+        {% if liked_songs %}
+        <div class="music-row">
+            {% for song in liked_songs %}
+            <div class="music-card">
+                <div class="music-card-img-wrapper">
+                    <img src="{% if song.thumbnail_image %}{{ song.thumbnail_image.url }}{% elif song.thumbnail_url %}{{ song.thumbnail_url }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}"
+                        alt="{{ song.title }}" class="music-card-img">
+                    <a href="javascript:void(0);" class="play-overlay border-0 js-play-song" data-id="{{ song.id }}" data-title="{{ song.title|escapejs }}" data-artist="{{ song.artist|escapejs }}" data-thumb="{% if song.thumbnail_image %}{{ song.thumbnail_image.url|escapejs }}{% elif song.thumbnail_url %}{{ song.thumbnail_url|escapejs }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}" data-url="{% if song.audio_file %}{{ song.audio_file.url|escapejs }}{% else %}#{% endif %}">
+                        <i class="fas fa-play"></i>
+                    </a>
                 </div>
-            </a>
+                <div class="music-card-info mt-3">
+                    <h5 class="music-card-title text-truncate">{{ song.title }}</h5>
+                    <p class="music-card-artist text-white-50 small text-truncate mb-0">{{ song.artist }}</p>
+                </div>
+            </div>
+            {% endfor %}
         </div>
+        {% else %}
+        <p class="text-white-50 mt-3 align-items-center">
+            You haven't liked any songs yet.
+            <a href="{% url 'emotion_detection' %}" class="text-primary text-decoration-none ms-1">Discover Music <i
+                    class="fas fa-arrow-right list-arrow"></i></a>
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Recently Played Section -->
+    <div class="music-section mb-5">
+        <h3 class="section-title mb-4"><i class="fas fa-history text-info me-2"></i> Recently Played</h3>
+        {% if recent_songs %}
+        <div class="music-row">
+            {% for song in recent_songs %}
+            <div class="music-card">
+                <div class="music-card-img-wrapper">
+                    <img src="{% if song.thumbnail_image %}{{ song.thumbnail_image.url }}{% elif song.thumbnail_url %}{{ song.thumbnail_url }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}"
+                        alt="{{ song.title }}" class="music-card-img">
+                    <a href="javascript:void(0);" class="play-overlay border-0 js-play-song" data-id="{{ song.id }}" data-title="{{ song.title|escapejs }}" data-artist="{{ song.artist|escapejs }}" data-thumb="{% if song.thumbnail_image %}{{ song.thumbnail_image.url|escapejs }}{% elif song.thumbnail_url %}{{ song.thumbnail_url|escapejs }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}" data-url="{% if song.audio_file %}{{ song.audio_file.url|escapejs }}{% else %}#{% endif %}">
+                        <i class="fas fa-play"></i>
+                    </a>
+                </div>
+                <div class="music-card-info mt-3">
+                    <h5 class="music-card-title text-truncate">{{ song.title }}</h5>
+                    <p class="music-card-artist text-white-50 small text-truncate mb-0">{{ song.artist }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-white-50 mt-3 align-items-center">
+            No history available. Start playing tracks to see them here!
+        </p>
+        {% endif %}
     </div>
 </div>
 
 <style>
-    .icon-box {
-        width: 80px;
-        height: 80px;
-        background: rgba(139, 92, 246, 0.1);
-        border: 1px solid rgba(139, 92, 246, 0.2);
+    /* Premium Music Layout Styles */
+    .home-dashboard {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .section-title {
+        font-weight: 700;
+        font-size: 1.5rem;
+        letter-spacing: 0.5px;
+    }
+
+    .music-row {
+        display: flex;
+        overflow-x: auto;
+        gap: 24px;
+        padding-bottom: 24px;
+        scroll-behavior: smooth;
+        /* Custom scrollbar for webkit */
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+
+    .music-row::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .music-row::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .music-row::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.2);
         border-radius: 20px;
+    }
+
+    .music-card {
+        flex: 0 0 auto;
+        width: 180px;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 16px;
+        padding: 16px;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .music-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-5px);
+        border-color: rgba(139, 92, 246, 0.4);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(139, 92, 246, 0.2);
+    }
+
+    .music-card-img-wrapper {
+        position: relative;
+        width: 100%;
+        padding-top: 100%;
+        /* 1:1 Aspect Ratio */
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .music-card-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .music-card:hover .music-card-img {
+        transform: scale(1.05);
+    }
+
+    .play-overlay {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        width: 44px;
+        height: 44px;
+        background: #1ed760;
+        /* Authentic music app green */
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
-        color: var(--primary);
+        color: #000;
+        font-size: 1.1rem;
+        text-decoration: none;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 2;
+    }
+
+    .play-overlay i {
+        margin-left: 3px;
+        /* visual center for play icon */
+    }
+
+    .music-card:hover .play-overlay {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .play-overlay:hover {
+        transform: translateY(0) scale(1.1) !important;
+        background: #1fdf64;
+    }
+
+    .add-to-playlist-overlay {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 32px;
+        height: 32px;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: translateY(-5px);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 3;
+    }
+    .add-to-playlist-overlay:hover {
+        background: rgba(139, 92, 246, 0.9);
+        transform: scale(1.1);
+    }
+    .music-card:hover .add-to-playlist-overlay {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .music-card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #fff;
+    }
+
+    .list-arrow {
+        font-size: 0.8rem;
+    }
+
+    /* Live Search Styles */
+    .glass-search {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
         transition: all 0.3s ease;
     }
+    .glass-search:focus-within {
+        border-color: rgba(139, 92, 246, 0.5);
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+        background: rgba(255, 255, 255, 0.08);
+    }
+    .glass-search input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+    .glass-dropdown {
+        background: rgba(20, 20, 20, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        max-height: 350px;
+        overflow-y: auto;
+        animation: fadeInDropdown 0.2s ease-out;
+    }
+    .glass-dropdown::-webkit-scrollbar { width: 6px; }
+    .glass-dropdown::-webkit-scrollbar-track { background: transparent; }
+    .glass-dropdown::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.2); border-radius: 10px; }
 
-    .icon-pink {
-        color: var(--secondary);
-        background: rgba(236, 72, 153, 0.1);
-        border-color: rgba(236, 72, 153, 0.2);
+    @keyframes fadeInDropdown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .search-item {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .search-item:last-child {
+        border-bottom: none;
+    }
+    .search-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .search-item img {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+    .search-item-info {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .search-title {
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .search-artist {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.8rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .highlight-text {
+        color: #8b5cf6;
+        font-weight: 700;
     }
 
-    .icon-blue {
-        color: var(--info);
-        background: rgba(59, 130, 246, 0.1);
-        border-color: rgba(59, 130, 246, 0.2);
+    /* Playlist Grid Styles */
+    .playlist-card-enhanced {
+        width: 180px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-
-    .icon-gold {
-        color: var(--warning);
-        background: rgba(245, 158, 11, 0.1);
-        border-color: rgba(245, 158, 11, 0.2);
+    .playlist-card-enhanced:hover {
+        transform: translateY(-5px);
     }
-
-    .landing-card:hover .icon-box {
-        transform: scale(1.1) rotate(5deg);
-        box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    .playlist-cover-container {
+        width: 180px;
+        height: 180px;
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .playlist-cover-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 1px;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .playlist-cover-grid img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.9;
+        transition: opacity 0.3s ease;
+    }
+    .playlist-cover-grid img:hover {
+        opacity: 1;
+    }
+    .playlist-name-info {
+        margin-top: 12px;
+        text-align: center;
+    }
+    .playlist-card-title {
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 2px;
+    }
+    .playlist-card-count {
+        color: rgba(255,255,255,0.5);
+        font-size: 0.75rem;
+    }
+    /* Fallback and Single Image styles */
+    .single-cover {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .placeholder-cover {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #3b0764, #1e1b4b);
+        color: rgba(255,255,255,0.2);
     }
 </style>
+
+<script>
+    function initializeLiveSearch() {
+        const searchInput = document.getElementById('liveSearchInput');
+        const searchDropdown = document.getElementById('searchDropdown');
+        
+        if (!searchInput || !searchDropdown) return;
+        
+        if (searchInput.dataset.initialized === "true") return;
+        searchInput.dataset.initialized = "true";
+        
+        let debounceTimer;
+
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            const query = e.target.value.trim();
+            
+            if (query.length === 0) {
+                searchDropdown.style.display = 'none';
+                return;
+            }
+            
+            debounceTimer = setTimeout(() => {
+                fetch('/api/search-songs/?q=' + encodeURIComponent(query))
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.songs && data.songs.length > 0) {
+                            searchDropdown.innerHTML = '';
+                            data.songs.forEach(song => {
+                                const item = document.createElement('div');
+                                item.className = 'search-item js-play-song';
+                                item.dataset.id = song.id;
+                                item.dataset.title = song.title; // Plain text for global player
+                                item.dataset.artist = song.artist;
+                                item.dataset.thumb = song.thumb;
+                                item.dataset.url = song.url;
+                                
+                                item.innerHTML = `
+                                    <img src="${song.thumb}" alt="${song.title}">
+                                    <div class="search-item-info">
+                                        <span class="search-title">${highlightMatch(song.title, query)}</span>
+                                        <span class="search-artist">${highlightMatch(song.artist, query)}</span>
+                                    </div>
+                                `;
+                                searchDropdown.appendChild(item);
+                            });
+                            searchDropdown.style.display = 'block';
+                        } else {
+                            searchDropdown.innerHTML = '<div class="p-4 text-white-50 text-center"><i class="fas fa-search mb-2 fs-4"></i><br>No songs found for "' + safeHtml(query) + '"</div>';
+                            searchDropdown.style.display = 'block';
+                        }
+                    })
+                    .catch(e => console.error("Search error:", e));
+            }, 100); 
+        });
+
+        if (!window.liveSearchGlobalClickAdded) {
+            document.addEventListener('click', function(e) {
+                const currentDropdown = document.getElementById('searchDropdown');
+                if (currentDropdown && !e.target.closest('.search-container')) {
+                    currentDropdown.style.display = 'none';
+                }
+            });
+            window.liveSearchGlobalClickAdded = true;
+        }
+
+        function highlightMatch(text, query) {
+            if (!query) return safeHtml(text);
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escapedQuery})`, 'gi');
+            return safeHtml(text).replace(regex, '<span class="highlight-text">$1</span>');
+        }
+
+        function safeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    }
+
+    // Attempt to run immediately (for HTMX injected content where DOM is already swapped)
+    initializeLiveSearch();
+
+    // Attach to primary DOMContentLoaded for initial hard reloads
+    document.addEventListener('DOMContentLoaded', initializeLiveSearch);
+    
+    // Attach to HTMX load event for deep dynamic navigations just in case
+    document.body.addEventListener('htmx:load', initializeLiveSearch);
+
+</script>
 {% endblock %}

@@ -4,8 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.cache import cache_control, never_cache
 from .forms import SignUpForm, LoginForm, UserProfileForm
-from .models import UserProfile, Song, PlaylistHistory, LikedSong
+from .models import UserProfile, Song, PlaylistHistory, LikedSong, Playlist, PlaylistSong
 from .youtube_api import YouTubeAPI
 from . import emotion_detector
 import json
@@ -14,7 +15,47 @@ import cv2
 import numpy as np
 from io import BytesIO
 from PIL import Image
+from django.contrib.auth.models import User
+import pyrebase
 
+# Initialize Pyrebase
+firebaseConfig = {
+    "apiKey": "AIzaSyAyYhybmDuEklIdvjYP6I2f4W4GifeS_9g",
+    "authDomain": "mood-detect-music.firebaseapp.com",
+    "projectId": "mood-detect-music",
+    "storageBucket": "mood-detect-music.firebasestorage.app",
+    "messagingSenderId": "317958909783",
+    "appId": "1:317958909783:web:82bdb7ef8f691a24e35812",
+    "measurementId": "G-8YT32QJ9BK",
+    "databaseURL": ""
+}
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Initialize Pyrebase only once
+# Your pyrebase configuration
+firebaseConfig = {
+    "apiKey": "AIzaSyAyYhybmDuEklIdvjYP6I2f4W4GifeS_9g",
+    "authDomain": "mood-detect-music.firebaseapp.com",
+    "projectId": "mood-detect-music",
+    "storageBucket": "mood-detect-music.firebasestorage.app",
+    "messagingSenderId": "317958909783",
+    "appId": "1:317958909783:web:82bdb7ef8f691a24e35812",
+    "measurementId": "G-8YT32QJ9BK",
+    "databaseURL": "" # Required by pyrebase4
+}
+
+try:
+    firebase = pyrebase.initialize_app(firebaseConfig)
+    firebase_auth = firebase.auth()
+    logger.info("Successfully initialized Pyrebase")
+except Exception as e:
+    logger.error(f"Failed to initialize Pyrebase: {e}")
+    # Don't let this crash the app on startup
+    firebase_auth = None
+    firebase = None
 
 def landing_page(request):
     """Landing page view"""
@@ -31,11 +72,35 @@ def signup_view(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            # UserProfile is automatically created by signals.py
+            email = form.cleaned_data.get('email')
+            password = form.cleaned_data.get('password1')
             username = form.cleaned_data.get('username')
-            messages.success(request, f'Account created for {username}. Please log in to continue.')
-            return redirect('login')  # Redirect to login page instead of home
+            
+            try:
+                # 1. Create user in Firebase Authentication
+                firebase_auth.create_user_with_email_and_password(email, password)
+                
+                # 2. Create user in Django Local DB
+                user = form.save()
+                
+                # Auto-login the new user
+                auth_user = authenticate(username=username, password=password)
+                if auth_user is not None:
+                    login(request, auth_user)
+                    messages.success(request, f'Welcome, {username}!')
+                    return redirect('home')
+                else:
+                    messages.success(request, f'Account created for {username}. Please log in to continue.')
+                    return redirect('login')
+            except Exception as e:
+                # Catch Firebase errors (e.g. Email already exists)
+                error_msg = str(e)
+                try:
+                    error_json = json.loads(e.args[1])
+                    error_msg = error_json['error']['message']
+                except:
+                    pass
+                messages.error(request, f"Firebase Error: {error_msg}")
         else:
             for field, errors in form.errors.items():
                 for error in errors:
@@ -55,10 +120,41 @@ def login_view(request):
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
             user = form.get_user()
-            login(request, user)
-            messages.success(request, f'Welcome back, {username}!')
-            return redirect('home')
+            
+            # Form validation in Django was successful. Wait, let's auth against Firebase too!
+            try:
+                # Firebase requires an email. We assume user.email is populated properly.
+                if user.email:
+                    try:
+                        firebase_auth.sign_in_with_email_and_password(user.email, password)
+                    except Exception as inner_e:
+                        error_str = str(inner_e)
+                        # If Firebase says invalid credentials (or email not found), it likely means 
+                        # this is an old Django user that hasn't been synced to Firebase yet.
+                        # Since Django just authenticated them successfully, we KNOW the password is correct.
+                        # We can securely create their Firebase account now.
+                        if 'INVALID_LOGIN_CREDENTIALS' in error_str or 'EMAIL_NOT_FOUND' in error_str:
+                            firebase_auth.create_user_with_email_and_password(user.email, password)
+                            print(f"Auto-synced existing Django user {username} to Firebase.")
+                        else:
+                            raise inner_e
+                else:
+                    # Proceed without Firebase if no email tied to account (legacy accounts)
+                    print(f"User {username} has no email, skipping Firebase auth.")
+                
+                login(request, user)
+                messages.success(request, f'Welcome, {username}!')
+                return redirect('home')
+            except Exception as e:
+                error_msg = str(e)
+                try:
+                    error_json = json.loads(e.args[1])
+                    error_msg = error_json['error']['message']
+                except:
+                    pass
+                messages.error(request, f"Firebase Auth Error: {error_msg}")
         else:
             messages.error(request, 'Invalid username or password.')
     else:
@@ -95,7 +191,36 @@ def language_selection(request):
 def home(request):
     """Home page view"""
     user_profile = UserProfile.objects.get(user=request.user)
-    return render(request, 'home.html', {'user_profile': user_profile})
+    
+    # 0. Custom Playlists
+    user_playlists = Playlist.objects.filter(user=request.user)
+    
+    # 1. Recommended Playlist (recommendation based on language)
+    my_playlist = list(Song.objects.filter(language=user_profile.preferred_language)[:10])
+    if not my_playlist:
+        my_playlist = list(Song.objects.all()[:10])
+        
+    # 2. Liked Songs
+    liked_songs = [ls.song for ls in LikedSong.objects.filter(user=request.user).select_related('song').order_by('-liked_at')[:10]]
+    
+    # 3. Recently Played (deduplicated)
+    history_entries = PlaylistHistory.objects.filter(user=request.user).select_related('song').order_by('-played_at')[:30]
+    recent_songs = []
+    seen_song_ids = set()
+    for entry in history_entries:
+        if entry.song.id not in seen_song_ids:
+            recent_songs.append(entry.song)
+            seen_song_ids.add(entry.song.id)
+            if len(recent_songs) >= 10:
+                break
+                
+    return render(request, 'home.html', {
+        'user_profile': user_profile,
+        'user_playlists': user_playlists,
+        'my_playlist': my_playlist,
+        'liked_songs': liked_songs,
+        'recent_songs': recent_songs,
+    })
 
 
 @login_required(login_url='login')
@@ -146,6 +271,33 @@ def detect_emotion(request):
 
 
 @login_required(login_url='login')
+def search_songs(request):
+    """AJAX endpoint for live search of songs"""
+    try:
+        query = request.GET.get('q', '').strip()
+        if not query:
+            return JsonResponse({'songs': []})
+            
+        from django.db.models import Q
+        # Search by title or artist, case-insensitive
+        songs = Song.objects.filter(
+            Q(title__icontains=query) | Q(artist__icontains=query)
+        ).exclude(audio_file__exact='')[:10]
+        
+        songs_data = [{
+            'id': song.id,
+            'title': song.title,
+            'artist': song.artist,
+            'thumb': song.thumbnail_image.url if song.thumbnail_image else (song.thumbnail_url or 'https://via.placeholder.com/200x200?text=MinuMusic'),
+            'url': song.audio_file.url if song.audio_file else '#'
+        } for song in songs]
+        
+        return JsonResponse({'songs': songs_data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required(login_url='login')
 @require_POST
 def get_song_recommendations(request):
     """AJAX endpoint to get song recommendations based on mood and language"""
@@ -177,11 +329,11 @@ def get_song_recommendations(request):
             'id': song.id,
             'title': song.title,
             'artist': song.artist,
-            'thumbnail_url': song.thumbnail_url or 'https://via.placeholder.com/200x200?text=MoodMusic',
+            'thumb': song.thumbnail_image.url if song.thumbnail_image else (song.thumbnail_url or 'https://via.placeholder.com/200x200?text=MoodMusic'),
             'mood': song.mood,
             'language': song.language,
             'youtube_id': song.youtube_id,
-            'audio_url': song.audio_file.url if song.audio_file else None
+            'url': song.audio_file.url if song.audio_file else '#'
         } for song in songs]
         
         return JsonResponse({'songs': songs_data})
@@ -225,21 +377,79 @@ def playlist_history(request):
     })
 
 
+
 @login_required(login_url='login')
+@never_cache
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def user_dashboard(request):
     """User dashboard with statistics"""
+    from django.db.models.functions import TruncDate
     user_profile = UserProfile.objects.get(user=request.user)
-    total_songs_played = PlaylistHistory.objects.filter(user=request.user).count()
+    history = PlaylistHistory.objects.filter(user=request.user).order_by('-played_at')
+    
+    total_songs_played = history.count()
+    
+    # Active Days calculation
+    active_days = history.annotate(day=TruncDate('played_at')).values('day').distinct().count()
+    
+    # Recent Activity
+    recent_activity = history.select_related('song')[:5]
     
     # Get top moods
-    history = PlaylistHistory.objects.filter(user=request.user)
     mood_stats = {}
     for entry in history:
-        mood = entry.song.mood
+        mood = entry.emotion_detected
         mood_stats[mood] = mood_stats.get(mood, 0) + 1
-    
+        
     return render(request, 'dashboard.html', {
         'user_profile': user_profile,
         'total_songs_played': total_songs_played,
-        'mood_stats': mood_stats
+        'mood_stats': mood_stats,
+        'active_days': active_days,
+        'recent_activity': recent_activity
     })
+
+@login_required(login_url='login')
+@require_POST
+def create_playlist(request):
+    try:
+        import json
+        data = json.loads(request.body)
+        name = data.get('name', '').strip()
+        if not name:
+            return JsonResponse({'success': False, 'error': 'Playlist name is required'})
+            
+        playlist = Playlist.objects.create(user=request.user, name=name)
+        return JsonResponse({'success': True, 'playlist': {'id': playlist.id, 'name': playlist.name}})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required(login_url='login')
+def get_playlists(request):
+    playlists = Playlist.objects.filter(user=request.user).order_by('-created_at')
+    data = [{'id': p.id, 'name': p.name} for p in playlists]
+    return JsonResponse({'playlists': data})
+
+@login_required(login_url='login')
+@require_POST
+def add_to_playlist(request):
+    try:
+        import json
+        data = json.loads(request.body)
+        playlist_id = data.get('playlist_id')
+        song_id = data.get('song_id')
+        
+        playlist = Playlist.objects.get(id=playlist_id, user=request.user)
+        song = Song.objects.get(id=song_id)
+        
+        PlaylistSong.objects.get_or_create(playlist=playlist, song=song)
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required(login_url='login')
+def playlist_detail(request, playlist_id):
+    from django.shortcuts import get_object_or_404
+    playlist = get_object_or_404(Playlist, id=playlist_id, user=request.user)
+    playlist_songs = PlaylistSong.objects.filter(playlist=playlist).select_related('song').order_by('-added_at')
+    return render(request, 'playlist_detail.html', {'playlist': playlist, 'playlist_songs': playlist_songs})
