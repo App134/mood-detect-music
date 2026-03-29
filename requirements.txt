@@ -16,3 +16,7 @@ dj-database-url==2.1.0
 numpy
 opencv-python-headless
 tensorflow-cpu==2.13.0
+Pyrebase4
+python-jwt
+pycryptodome
+requests-toolbelt
