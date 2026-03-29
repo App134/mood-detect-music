@@ -17,3 +17,6 @@ python manage.py migrate
 
 # Automatically populate songs from media/songs directory
 python manage.py populate_songs
+
+# Automatically create superuser if environment variables are set
+python manage.py createsuperuser --noinput || true
