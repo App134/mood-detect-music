@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import os
-from tensorflow.keras.models import load_model
 
 # Labels must match the model's training labels/order
 EMO_LABELS = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
@@ -26,6 +25,9 @@ def _load_model():
     global _model
     if _model is None:
         try:
+            logger.info("First call to emotion detection: Importing TensorFlow (Lazy Loading)...")
+            from tensorflow.keras.models import load_model
+            
             if not os.path.exists(MODEL_PATH):
                 logger.error(f"AI Model file NOT found at: {MODEL_PATH}")
                 raise FileNotFoundError(f"Model not found at: {MODEL_PATH}")

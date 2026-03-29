@@ -282,14 +282,20 @@ def detect_emotion(request):
         image_bytes = base64.b64decode(image_data)
         image = Image.open(BytesIO(image_bytes))
         image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-        
-        # Detect emotion (uses ai model if available)
-        emotion, mood, confidence = emotion_detector.detect_emotion_from_frame(image_cv)
 
-        # Log for dashboard monitoring
-        logger.info(f"Emotion detection result: emotion={emotion}, mood={mood}, confidence={confidence}")
+        # Detect emotion (uses ai model with lazy loading)
+        try:
+            logger.info(f"Attempting emotion detection for user: {request.user.username}")
+            emotion, mood, confidence = emotion_detector.detect_emotion_from_frame(image_cv)
+            logger.info(f"Emotion detection result: emotion={emotion}, mood={mood}, confidence={confidence}")
+        except MemoryError:
+            logger.error("CRITICAL: Out of Memory during AI detection!")
+            emotion, mood, confidence = 'neutral', 'neutral', 0.5
+        except Exception as e:
+            logger.error(f"AI detection engine error: {e}")
+            emotion, mood, confidence = 'neutral', 'neutral', 0.5
 
-        # If no face detected, return mood='null' (client can map to neutral/fallback)
+        # If no face detected, return mood='null'
         if emotion is None:
             return JsonResponse({
                 'emotion': None,
@@ -302,8 +308,9 @@ def detect_emotion(request):
             'mood': mood,
             'confidence': round(confidence, 2)
         })
-    
+
     except Exception as e:
+        logger.error(f"General error in detect_emotion: {e}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
 
 

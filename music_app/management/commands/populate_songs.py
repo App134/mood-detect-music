@@ -24,6 +24,20 @@ class Command(BaseCommand):
         # Available model choices
         mood_list = ['happy', 'sad', 'angry', 'fear', 'surprise', 'neutral']
         lang_list = ['en', 'hi', 'ta', 'te', 'ml', 'kn']
+        
+        # High quality thumbnails (Unsplash music-themed)
+        thumbnails = [
+            "https://images.unsplash.com/photo-1470225620780-dba8ba36b745", # DJ
+            "https://images.unsplash.com/photo-1493225255756-d9584f8606e9", # Artist
+            "https://images.unsplash.com/photo-1459749411177-042180ce673c", # Concert
+            "https://images.unsplash.com/photo-1514525253361-bee8d41dfb7a", # Vinyl
+            "https://images.unsplash.com/photo-1453090927415-5f45085b65c0", # Guitar
+            "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4", # Mic
+            "https://images.unsplash.com/photo-1516280440614-37939bbacd81", # Piano
+            "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad", # Color
+            "https://images.unsplash.com/photo-1420182223722-e93ea3a5bd71", # Nature
+            "https://images.unsplash.com/photo-1501612780327-45045538702b"  # Rock
+        ]
 
         for filename in files:
             # Avoid duplicates by checking audio_file path
@@ -92,12 +106,24 @@ class Command(BaseCommand):
 
             # 5. Save to Database
             try:
+                # Pick a random thumbnail
+                thumb = random.choice(thumbnails) + "?auto=format&fit=crop&w=300&q=80"
+                
                 if existing_song:
+                    updated = False
                     # Update language if it was default 'en' but now detected as something else
                     if existing_song.language == 'en' and language != 'en':
                         existing_song.language = language
+                        updated = True
+                    
+                    # Update thumbnail if missing
+                    if not existing_song.thumbnail_url and not existing_song.thumbnail_image:
+                        existing_song.thumbnail_url = thumb
+                        updated = True
+                        
+                    if updated:
                         existing_song.save()
-                        self.stdout.write(self.style.SUCCESS(f'Updated language to {language} for: {filename}'))
+                        self.stdout.write(self.style.SUCCESS(f'Updated metadata for: {filename}'))
                     skipped_count += 1
                 else:
                     Song.objects.create(
@@ -105,7 +131,8 @@ class Command(BaseCommand):
                         artist=artist[:250],
                         audio_file=audio_field_path,
                         mood=mood,
-                        language=language
+                        language=language,
+                        thumbnail_url=thumb
                     )
                     created_count += 1
             except Exception as e:
