@@ -48,6 +48,9 @@ firebaseConfig = {
 }
 
 try:
+    if not firebaseConfig.get("apiKey") or firebaseConfig.get("apiKey") == "YOUR_API_KEY":
+        logger.warning("Firebase API Key is missing or default. Firebase Auth may not work.")
+    
     firebase = pyrebase.initialize_app(firebaseConfig)
     firebase_auth = firebase.auth()
     logger.info("Successfully initialized Pyrebase")
@@ -76,35 +79,59 @@ def signup_view(request):
             password = form.cleaned_data.get('password1')
             username = form.cleaned_data.get('username')
             
+            logger.info(f"Attempting signup for user: {username} ({email})")
+            
             try:
                 # 1. Create user in Firebase Authentication
-                firebase_auth.create_user_with_email_and_password(email, password)
-                
+                if firebase_auth:
+                    try:
+                        firebase_auth.create_user_with_email_and_password(email, password)
+                        logger.info(f"Firebase user created successfully for {email}")
+                    except Exception as fe:
+                        # Check if user already exists in Firebase
+                        error_str = str(fe)
+                        if 'EMAIL_EXISTS' in error_str:
+                            logger.warning(f"Firebase user {email} already exists. This might be a retry attempt. Proceeding to Django sync.")
+                        else:
+                            logger.error(f"Firebase signup error: {error_str}")
+                            raise fe
+                else:
+                    logger.warning("Firebase auth not initialized, skipping Firebase user creation.")
+
                 # 2. Create user in Django Local DB
+                # This will trigger the signal in signals.py to create UserProfile
                 user = form.save()
+                logger.info(f"Django user {username} saved successfully.")
                 
                 # Auto-login the new user
                 auth_user = authenticate(username=username, password=password)
                 if auth_user is not None:
                     login(request, auth_user)
-                    messages.success(request, f'Welcome, {username}!')
+                    logger.info(f"User {username} auto-logged in.")
+                    messages.success(request, f'Welcome, {username}! Your account has been created.')
                     return redirect('home')
                 else:
+                    logger.warning(f"Auto-login failed for {username} after successful creation.")
                     messages.success(request, f'Account created for {username}. Please log in to continue.')
                     return redirect('login')
+                    
             except Exception as e:
-                # Catch Firebase errors (e.g. Email already exists)
+                # Detailed logging for Render
+                logger.error(f"Signup error for {username}: {str(e)}", exc_info=True)
+                
                 error_msg = str(e)
                 try:
-                    error_json = json.loads(e.args[1])
-                    error_msg = error_json['error']['message']
+                    # Pyrebase errors often have a JSON string in args[1]
+                    if hasattr(e, 'args') and len(e.args) > 1:
+                        error_json = json.loads(e.args[1])
+                        error_msg = error_json['error']['message']
                 except:
                     pass
-                messages.error(request, f"Firebase Error: {error_msg}")
+                
+                messages.error(request, f"Signup failed: {error_msg}")
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
+            logger.warning(f"Signup form validation failed for user {request.POST.get('username')}: {form.errors.as_text()}")
+            # Form errors will be displayed in the template
     else:
         form = SignUpForm()
     
