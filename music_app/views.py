@@ -219,13 +219,20 @@ def home(request):
     """Home page view"""
     user_profile = UserProfile.objects.get(user=request.user)
     
+    # Log language preference for debugging on Render
+    logger.info(f"Home View: User {request.user.username} preferred language is '{user_profile.preferred_language}'")
+    
     # 0. Custom Playlists
     user_playlists = Playlist.objects.filter(user=request.user)
     
     # 1. Recommended Playlist (recommendation based on language)
-    my_playlist = list(Song.objects.filter(language=user_profile.preferred_language)[:10])
+    recommended_qs = Song.objects.filter(language=user_profile.preferred_language).exclude(audio_file__exact='')
+    logger.info(f"Home View: Found {recommended_qs.count()} songs for language '{user_profile.preferred_language}'")
+    
+    my_playlist = list(recommended_qs[:10])
     if not my_playlist:
-        my_playlist = list(Song.objects.all()[:10])
+        logger.warning(f"Home View: No songs found for language '{user_profile.preferred_language}', falling back to all songs.")
+        my_playlist = list(Song.objects.exclude(audio_file__exact='')[:10])
         
     # 2. Liked Songs
     liked_songs = [ls.song for ls in LikedSong.objects.filter(user=request.user).select_related('song').order_by('-liked_at')[:10]]
@@ -278,6 +285,9 @@ def detect_emotion(request):
         
         # Detect emotion (uses ai model if available)
         emotion, mood, confidence = emotion_detector.detect_emotion_from_frame(image_cv)
+
+        # Log for dashboard monitoring
+        logger.info(f"Emotion detection result: emotion={emotion}, mood={mood}, confidence={confidence}")
 
         # If no face detected, return mood='null' (client can map to neutral/fallback)
         if emotion is None:

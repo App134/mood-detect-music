@@ -12,6 +12,10 @@ MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'emotion_model.h5
 # Lazy-load global model
 _model = None
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Face detection model
 _face_cascade = cv2.CascadeClassifier(
     cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
@@ -21,9 +25,20 @@ def _load_model():
     """Load the model only once for better performance."""
     global _model
     if _model is None:
-        if not os.path.exists(MODEL_PATH):
-            raise FileNotFoundError(f"Model not found at: {MODEL_PATH}")
-        _model = load_model(MODEL_PATH)
+        try:
+            if not os.path.exists(MODEL_PATH):
+                logger.error(f"AI Model file NOT found at: {MODEL_PATH}")
+                raise FileNotFoundError(f"Model not found at: {MODEL_PATH}")
+            
+            logger.info(f"Loading AI model from: {MODEL_PATH} (Size: {os.path.getsize(MODEL_PATH)} bytes)")
+            _model = load_model(MODEL_PATH)
+            logger.info("Successfully loaded AI model into memory.")
+        except MemoryError:
+            logger.error("Out of Memory while loading AI model! This is common on Render Free Tier.")
+            raise
+        except Exception as e:
+            logger.error(f"Error loading AI model: {e}", exc_info=True)
+            raise
     return _model
 
 
