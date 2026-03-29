@@ -123,3 +123,13 @@ YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', 'AIzaSyDQEtSEWtaD8_5two2gBPu
 # Session Settings
 SESSION_COOKIE_AGE = 1209600
 SESSION_SAVE_EVERY_REQUEST = False
+
+# Authentication Redirects
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'login'
+LOGIN_URL = 'login'
+
+# Extra Security for Production
+if not DEBUG:
+    ALLOWED_HOSTS.append('smart-mood-music.onrender.com')
+    CSRF_TRUSTED_ORIGINS.append('https://smart-mood-music.onrender.com')
