@@ -1397,3 +1397,35 @@ footer p {
     transform: scale(1.15);
     color: var(--primary) !important;
 }
+
+/* ─── Global Responsive Fixes ────────────────── */
+
+@media (max-width: 768px) {
+    #main-content {
+        padding-bottom: 110px !important; /* Avoid Mini Player overlap */
+        padding-top: 20px;
+    }
+
+    h1 { font-size: 1.8rem !important; }
+    h2 { font-size: 1.5rem !important; }
+    h3 { font-size: 1.3rem !important; }
+    
+    .container-fluid {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    /* Table adjustments */
+    .table-responsive {
+        border: none;
+        margin-bottom: 0;
+    }
+
+    /* Sidebar drawer polish */
+    .nav-drawer {
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(20px);
+        width: 280px;
+    }
+}

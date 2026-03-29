@@ -202,11 +202,17 @@
     /* Chart Container */
     .chart-container {
         position: relative;
-        height: 300px;
+        height: 350px; /* Default height */
         width: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
+    }
+
+    @media (max-width: 768px) {
+        .chart-container {
+            height: 260px; /* Smaller height on mobile */
+        }
     }
     
     /* Empty State */

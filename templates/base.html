@@ -370,7 +370,7 @@
             <!-- Left: Song Info -->
             <div class="mini-player-left" onclick="toggleFullScreenPlayer()">
                 <div class="mini-thumb-wrapper">
-                    <img id="mini-thumbnail" src="https://via.placeholder.com/50x50?text=..." alt="Album Art" 
+                    <img id="mini-thumbnail" src="/static/images/default_thumb.png" alt="Album Art" 
                          onerror="this.src='/static/images/default_thumb.png'; this.onerror=null;">
                 </div>
                 <div class="mini-info">
@@ -423,7 +423,7 @@
         <div class="glass-fullscreen-player" id="fullscreenPlayer">
             <button class="close-fullscreen" onclick="toggleFullScreenPlayer()"><i class="fas fa-chevron-down"></i></button>
             <div class="fs-player-content">
-                <img id="fs-thumbnail" src="https://via.placeholder.com/400x400?text=..." alt="Album Art" class="fs-album-art"
+                <img id="fs-thumbnail" src="/static/images/default_thumb.png" alt="Album Art" class="fs-album-art"
                      onerror="this.src='/static/images/default_thumb.png'; this.onerror=null;">
                 
                 <div class="fs-actions-layer d-flex justify-content-between align-items-center w-100 mb-3 px-2">
@@ -584,14 +584,21 @@
                 // Show mini player if first time
                 document.getElementById('miniPlayer').style.display = 'flex';
                 
-                // Update UI
-                document.getElementById('mini-title').innerText = song.title;
-                document.getElementById('mini-artist').innerText = song.artist;
-                document.getElementById('mini-thumbnail').src = song.thumb;
+                // Update UI - with decoding for special characters
+                function decodeTitle(str) {
+                    return str.replace(/\\u0026/g, '&').replace(/&amp;/g, '&');
+                }
                 
-                document.getElementById('fs-title').innerText = song.title;
-                document.getElementById('fs-artist').innerText = song.artist;
-                document.getElementById('fs-thumbnail').src = song.thumb;
+                const decodedTitle = decodeTitle(song.title);
+                const decodedArtist = decodeTitle(song.artist);
+
+                document.getElementById('mini-title').innerText = decodedTitle;
+                document.getElementById('mini-artist').innerText = decodedArtist;
+                document.getElementById('mini-thumbnail').src = song.thumb || '/static/images/default_thumb.png';
+                
+                document.getElementById('fs-title').innerText = decodedTitle;
+                document.getElementById('fs-artist').innerText = decodedArtist;
+                document.getElementById('fs-thumbnail').src = song.thumb || '/static/images/default_thumb.png';
 
                 // Sync like state
                 fetch('/api/song-status/?song_id=' + song.id)

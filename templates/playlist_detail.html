@@ -33,29 +33,70 @@
         object-fit: cover;
     }
     .playlist-header-info h1 {
-        font-size: 4.5rem;
+        font-size: clamp(2rem, 8vw, 4.5rem);
         font-weight: 800;
         margin: 0;
         color: #fff;
-        line-height: 1;
+        line-height: 1.1;
         letter-spacing: -2px;
+        word-break: break-word; /* Allow long titles to wrap nicely */
     }
     .playlist-header-info .meta {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         color: rgba(255, 255, 255, 0.7);
         margin-top: 15px;
         font-weight: 600;
     }
+
+    .premium-list-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 4px;
+    }
+
+    /* Fixed Column Widths for alignment */
+    .track-index-col { width: 50px; text-align: center; }
+    .track-duration-col { width: 80px; text-align: right; white-space: nowrap; }
 
     @media (max-width: 768px) {
         .playlist-header {
             flex-direction: column;
             align-items: center;
             text-align: center;
+            gap: 20px;
+            padding: 30px 15px;
         }
-        .playlist-header-info h1 {
-            font-size: 2.5rem;
-            letter-spacing: -1px;
+        .playlist-header-cover {
+            width: 180px;
+            height: 180px;
+            min-width: 180px;
+        }
+
+        /* Hide non-essential columns on mobile to prevent overlapping */
+        .track-album-col, .track-date-col {
+            display: none;
+        }
+        
+        .premium-list-table th:nth-child(3), 
+        .premium-list-table th:nth-child(4),
+        .premium-list-table td:nth-child(3), 
+        .premium-list-table td:nth-child(4) {
+            display: none !important;
+        }
+
+        .track-info-cell {
+            gap: 10px;
+        }
+
+        .track-thumb-img {
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px;
+        }
+        
+        .track-title {
+            font-size: 0.9rem;
+            max-width: 150px;
         }
     }
 </style>
@@ -97,34 +138,34 @@
                 <thead>
                     <tr>
                         <th class="track-index-col">#</th>
-                        <th>Title</th>
-                        <th>Album</th>
-                        <th>Date Added</th>
+                        <th class="track-title-col">Title</th>
+                        <th class="track-album-col">Album</th>
+                        <th class="track-date-col">Date Added</th>
                         <th class="track-duration-col"><i class="far fa-clock"></i></th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for ps in playlist_songs %}
-                    <tr class="premium-row js-play-song" data-id="{{ ps.song.id }}" data-title="{{ ps.song.title|escapejs }}" data-artist="{{ ps.song.artist|escapejs }}" data-thumb="{% if ps.song.thumbnail_image %}{{ ps.song.thumbnail_image.url|escapejs }}{% elif ps.song.thumbnail_url %}{{ ps.song.thumbnail_url|escapejs }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}" data-url="{% if ps.song.audio_file %}{{ ps.song.audio_file.url|escapejs }}{% else %}#{% endif %}">
+                    <tr class="premium-row js-play-song" data-id="{{ ps.song.id }}" data-title="{{ ps.song.title|escapejs }}" data-artist="{{ ps.song.artist|escapejs }}" data-thumb="{% if ps.song.thumbnail_image %}{{ ps.song.thumbnail_image.url|escapejs }}{% elif ps.song.thumbnail_url %}{{ ps.song.thumbnail_url|escapejs }}{% else %}/static/images/default_thumb.png{% endif %}" data-url="{% if ps.song.audio_file %}{{ ps.song.audio_file.url|escapejs }}{% else %}#{% endif %}">
                         <td class="track-index-col">
                             <div class="track-index-wrapper">
                                 <span class="track-index-text">{{ forloop.counter }}</span>
                                 <i class="fas fa-play track-play-icon"></i>
                             </div>
                         </td>
-                        <td>
+                        <td class="track-title-col">
                             <div class="track-info-cell">
-                                <img src="{% if ps.song.thumbnail_image %}{{ ps.song.thumbnail_image.url }}{% elif ps.song.thumbnail_url %}{{ ps.song.thumbnail_url }}{% else %}https://via.placeholder.com/200x200?text=MinuMusic{% endif %}" alt="{{ ps.song.title }}" class="track-thumb-img">
+                                <img src="{% if ps.song.thumbnail_image %}{{ ps.song.thumbnail_image.url }}{% elif ps.song.thumbnail_url %}{{ ps.song.thumbnail_url }}{% else %}/static/images/default_thumb.png{% endif %}" alt="{{ ps.song.title }}" class="track-thumb-img" onerror="this.src='/static/images/default_thumb.png'; this.onerror=null;">
                                 <div class="text-truncate">
                                     <div class="track-title text-truncate">{{ ps.song.title }}</div>
                                     <div class="track-artist text-truncate">{{ ps.song.artist }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td>
+                        <td class="track-album-col">
                             <div class="track-album text-truncate">Single</div>
                         </td>
-                        <td>
+                        <td class="track-date-col">
                             <div class="track-date text-truncate">{{ ps.added_at|date:"M j, Y" }}</div>
                         </td>
                         <td class="track-duration-col">
