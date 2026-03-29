@@ -3,7 +3,8 @@
 set -o errexit
 
 # Upgrade pip and key build tools
-pip install --upgrade pip setuptools wheel
+pip install --upgrade pip
+pip install setuptools==69.5.1 wheel
 
 # Install dependencies
 pip install -r requirements.txt
