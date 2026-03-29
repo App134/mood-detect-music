@@ -1,6 +1,7 @@
 """
 URL configuration for music_project.
 """
+import os
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
@@ -13,10 +14,13 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    # Use custom Range-aware server for media (audio seeking support)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Use custom Range-aware server for media (audio seeking support)
+# We enable this in production too to serve MP3s from local filesystem on Render
+if os.path.exists(settings.MEDIA_ROOT):
     urlpatterns += [
         re_path(r'^media/(?P<path>.*)$', serve_media_with_range),
     ]
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
     
