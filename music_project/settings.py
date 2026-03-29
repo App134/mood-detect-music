@@ -132,4 +132,6 @@ LOGIN_URL = 'login'
 # Extra Security for Production
 if not DEBUG:
     ALLOWED_HOSTS.append('smart-mood-music.onrender.com')
+    ALLOWED_HOSTS.append('mood-detect-music-1.onrender.com')
     CSRF_TRUSTED_ORIGINS.append('https://smart-mood-music.onrender.com')
+    CSRF_TRUSTED_ORIGINS.append('https://mood-detect-music-1.onrender.com')

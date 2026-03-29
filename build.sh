@@ -14,3 +14,6 @@ python manage.py collectstatic --no-input
 
 # Run migrations
 python manage.py migrate
+
+# Automatically populate songs from media/songs directory
+python manage.py populate_songs
