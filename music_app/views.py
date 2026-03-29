@@ -150,39 +150,54 @@ def login_view(request):
             password = form.cleaned_data.get('password')
             user = form.get_user()
             
-            # Form validation in Django was successful. Wait, let's auth against Firebase too!
+            logger.info(f"LOGIN: Django authentication successful for user: {username}")
+            
+            # Form validation in Django was successful. Auth against Firebase too!
             try:
-                # Firebase requires an email. We assume user.email is populated properly.
+                if not firebase_auth:
+                    logger.error("LOGIN: Firebase auth object is NOT initialized. Check environment variables.")
+                    login(request, user) # Fallback if Firebase is misconfigured but Django is OK
+                    messages.success(request, f'Welcome, {username}! (Firebase unavailable)')
+                    return redirect('home')
+
                 if user.email:
                     try:
+                        logger.info(f"LOGIN: Attempting Firebase sign-in for email: {user.email}")
                         firebase_auth.sign_in_with_email_and_password(user.email, password)
+                        logger.info(f"LOGIN: Firebase sign-in successful for user: {username}")
                     except Exception as inner_e:
-                        error_str = str(inner_e)
+                        error_str = str(inner_e).upper()
+                        logger.warning(f"LOGIN: Firebase sign-in failed: {error_str}")
+                        
                         # If Firebase says invalid credentials (or email not found), it likely means 
                         # this is an old Django user that hasn't been synced to Firebase yet.
-                        # Since Django just authenticated them successfully, we KNOW the password is correct.
-                        # We can securely create their Firebase account now.
-                        if 'INVALID_LOGIN_CREDENTIALS' in error_str or 'EMAIL_NOT_FOUND' in error_str:
-                            firebase_auth.create_user_with_email_and_password(user.email, password)
-                            print(f"Auto-synced existing Django user {username} to Firebase.")
+                        if 'INVALID_LOGIN_CREDENTIALS' in error_str or 'EMAIL_NOT_FOUND' in error_str or 'INVALID_PASSWORD' in error_str:
+                            logger.info(f"LOGIN: Attempting to auto-sync user {username} to Firebase...")
+                            try:
+                                firebase_auth.create_user_with_email_and_password(user.email, password)
+                                logger.info(f"LOGIN: Successfully auto-synced {username} to Firebase.")
+                            except Exception as sync_e:
+                                logger.error(f"LOGIN: Failed to auto-sync user {username}: {sync_e}")
+                                raise sync_e
                         else:
                             raise inner_e
                 else:
-                    # Proceed without Firebase if no email tied to account (legacy accounts)
-                    print(f"User {username} has no email, skipping Firebase auth.")
+                    logger.info(f"LOGIN: User {username} has no email, skipping Firebase auth.")
                 
                 login(request, user)
                 messages.success(request, f'Welcome, {username}!')
                 return redirect('home')
             except Exception as e:
                 error_msg = str(e)
+                logger.error(f"LOGIN: Firebase Auth Error: {error_msg}")
                 try:
                     error_json = json.loads(e.args[1])
                     error_msg = error_json['error']['message']
                 except:
                     pass
-                messages.error(request, f"Firebase Auth Error: {error_msg}")
+                messages.error(request, f"Login Error (Firebase): {error_msg}")
         else:
+            logger.warning(f"LOGIN: Django form invalid. Username/Password incorrect or user does not exist in local DB.")
             messages.error(request, 'Invalid username or password.')
     else:
         form = LoginForm()
